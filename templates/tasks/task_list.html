@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks | QuestFlow{% endblock %}
+
+{% block content %}
+<div x-data="{ openModal: false }" @keydown.escape.window="openModal = false" class="w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Tasks</h1>
+                {% if request.user.role in 'manager,admin' %}
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage and track your team's work.</p>
+                {% else %}
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Here are your assigned tasks:</p>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'tasks:task_kanban' %}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                    </svg>
+                    Kanban Board
+                </a>
+                {% if request.user.role in 'manager,admin' %}
+                <button hx-get="{% url 'tasks:task_create' %}" hx-target="#modal-content" @click="openModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New Task
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+            <form hx-get="{% url 'tasks:task_filter_partial' %}" hx-target="#task-list-container"
+                class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label for="status"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                    <select name="status" id="status"
+                        class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
+                        @change="$dispatch('submit')">
+                        <option value="">All Statuses</option>
+                        <option value="todo">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="done">Done</option>
+                        <option value="overdue">Overdue</option>
+                    </select>
+                </div>
+                <!-- More filters could be added here -->
+                <button type="submit" class="hidden">Filter</button>
+            </form>
+        </div>
+
+        <!-- Task List Container -->
+        <div id="task-list-container"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {% include "partials/_task_list.html" %}
+        </div>
+    </div>
+
+    <!-- Modal Container for Form -->
+    <div x-show="openModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="openModal" x-transition.opacity
+                class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="openModal = false"
+                aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="openModal" x-transition.scale.origin.bottom
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div id="modal-content">
+                    <!-- HTMX will load the form here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

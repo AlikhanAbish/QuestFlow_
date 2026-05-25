@@ -1,0 +1,66 @@
+<form id="profile-form"
+      hx-post="{% url 'accounts:profile-update' %}" 
+      hx-target="#profile-form-container" 
+      hx-swap="innerHTML"
+      enctype="multipart/form-data"
+      class="space-y-6">
+    
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-4 text-sm text-red-400">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+    
+    <!-- User summary header inside the form for dynamic preview update if wanted, but keep structure simple -->
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+            <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}
+                <div class="errorlist">{{ form.first_name.errors }}</div>
+            {% endif %}
+        </div>
+        <div>
+            <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}
+                <div class="errorlist">{{ form.last_name.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+            <div class="errorlist">{{ form.username.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="{{ form.avatar.id_for_label }}" class="form-label">{{ form.avatar.label }}</label>
+        <div class="mt-1 flex items-center bg-white/5 border border-white/10 p-2 rounded-xl">
+            {{ form.avatar }}
+        </div>
+        {% if form.avatar.errors %}
+            <div class="errorlist">{{ form.avatar.errors }}</div>
+        {% endif %}
+        <style>
+            /* Quick style override for django's default file input inside glass aesthetic */
+            .form-file-input { @apply text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-500/20 file:text-primary-400 hover:file:bg-primary-500/30 transition-all duration-300; }
+        </style>
+    </div>
+
+    <div class="pt-4 flex justify-end">
+        <button type="submit" class="btn-primary w-auto group relative overflow-hidden">
+            <span class="relative z-10">Save Changes</span>
+            <svg class="htmx-indicator w-5 h-5 absolute right-4 hidden group-[.htmx-request]:block animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </button>
+    </div>
+</form>

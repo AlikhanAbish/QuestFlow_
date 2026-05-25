@@ -1,0 +1,36 @@
+{% load humanize %}
+{# Partial rendered when NotificationsListView is called via HTMX — list only #}
+{% for notif in notifications %}
+{% include "notifications/partials/_notification_item.html" with notif=notif %}
+{% empty %}
+<div class="py-16 text-center">
+    <div class="text-5xl mb-3">🔔</div>
+    <p class="text-zinc-400 text-sm">No notifications yet.</p>
+</div>
+{% endfor %}
+
+{% if is_paginated %}
+<div class="flex justify-center gap-2 pt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"
+       hx-get="?page={{ page_obj.previous_page_number }}"
+       hx-target="#notif-list"
+       hx-swap="innerHTML"
+       class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-zinc-300 transition-colors">
+        ← Previous
+    </a>
+    {% endif %}
+    <span class="px-4 py-2 text-sm text-zinc-500">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"
+       hx-get="?page={{ page_obj.next_page_number }}"
+       hx-target="#notif-list"
+       hx-swap="innerHTML"
+       class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-zinc-300 transition-colors">
+        Next →
+    </a>
+    {% endif %}
+</div>
+{% endif %}

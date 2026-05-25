@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block page_title %}Employee Dashboard{% endblock %}
+
+<!-- ==================== DEBUG ==================== -->
+<!-- <div class="bg-red-900/80 text-white p-4 m-4 rounded-xl text-sm font-mono">
+    <strong>DEBUG INFO:</strong><br>
+    Template: employee.html<br>
+    View: {{ debug_view_name|default:"Unknown" }}<br>
+    User: {{ request.user.email }} ({{ request.user.role|default:"No role" }})<br>
+    Active tasks count: {{ active_tasks|length|default:0 }}<br>
+    Debug count: {{ debug_active_tasks_count|default:"NOT PASSED" }}
+</div> -->
+==============================================
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column: Tasks -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="glass-dark rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                        </path>
+                    </svg>
+                    Active Tasks
+                </h2>
+                <a href="{% url 'tasks:task_list' %}"
+                    class="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors">
+                    View All
+                </a>
+            </div>
+
+            <div class="space-y-4">
+                {% if active_tasks.exists or active_tasks %}
+                    {% for task in active_tasks %}
+                        {% include 'partials/_task_card.html' with task=task %}
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-10 border border-dashed border-white/10 rounded-xl">
+                    <div class="w-16 h-16 mx-auto bg-white/5 rounded-full flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-white mb-1">No active tasks</h3>
+                    <p class="text-sm text-gray-400">You're all caught up! Enjoy your day.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+
+        <!-- Achievements Placeholder -->
+        <div class="glass-dark rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                    </path>
+                </svg>
+                Achievements
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <!-- Placeholder badge -->
+                <div
+                    class="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:bg-white/10 transition-colors group">
+                    <div
+                        class="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 p-[2px] mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <div class="w-full h-full bg-dark-card rounded-full flex items-center justify-center">
+                            <span class="text-xl">🏆</span>
+                        </div>
+                    </div>
+                    <h4 class="text-xs font-semibold text-white">First Blood</h4>
+                    <p class="text-[10px] text-gray-400 mt-1">Completed first task</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Gamification Widgets -->
+    <div class="space-y-6">
+        <!-- XP Counter Partial — refreshes on task completion AND on comment (TZ fix Пункт 4) -->
+        <div hx-get="{% url 'gamification:xp-counter' %}"
+            hx-trigger="load, taskStatusUpdated from:body, commentAdded from:body" hx-swap="innerHTML">
+            <!-- Loading Skeleton -->
+            <div class="glass-dark rounded-2xl p-6 animate-pulse">
+                <div class="h-6 bg-white/10 rounded w-1/3 mb-4"></div>
+                <div class="h-20 bg-white/5 rounded-xl mb-4"></div>
+            </div>
+        </div>
+
+        <!-- Burnout Badge Partial -->
+        <div hx-get="{% url 'accounts:dashboard-burnout-badge' %}" hx-trigger="load">
+            <div class="glass-dark rounded-2xl p-6 animate-pulse">
+                <div class="h-6 bg-white/10 rounded w-1/2 mb-4"></div>
+                <div class="h-16 bg-white/5 rounded-xl"></div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Partial — refreshes on task status change (TZ fix Пункт 4) -->
+        <div hx-get="{% url 'gamification:leaderboard' %}" hx-trigger="load, taskStatusUpdated from:body"
+            hx-swap="innerHTML">
+            <div class="glass-dark rounded-2xl p-6 animate-pulse">
+                <div class="h-6 bg-white/10 rounded w-1/3 mb-4"></div>
+                <div class="space-y-3">
+                    <div class="h-12 bg-white/5 rounded-xl"></div>
+                    <div class="h-12 bg-white/5 rounded-xl"></div>
+                    <div class="h-12 bg-white/5 rounded-xl"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

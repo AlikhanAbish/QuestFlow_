@@ -1,0 +1,99 @@
+<div class="w-full flex flex-col h-full animate-fade-in"
+     x-data="{
+        initChart() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js is not loaded.');
+                return;
+            }
+            const ctx = this.$refs.canvas.getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ labels_json|safe }},
+                    datasets: [
+                        {
+                            label: 'Healthy (Green)',
+                            data: {{ green_json|safe }},
+                            backgroundColor: '#10B981', /* green-500 */
+                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 4 },
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'At Risk (Yellow)',
+                            data: {{ yellow_json|safe }},
+                            backgroundColor: '#F59E0B', /* yellow-500 */
+                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 4 },
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'Burned Out (Red)',
+                            data: {{ red_json|safe }},
+                            backgroundColor: '#EF4444', /* red-500 */
+                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 4, bottomRight: 4 },
+                            borderSkipped: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { usePointStyle: true, boxWidth: 8 }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: { precision: 0, stepSize: 1 },
+                            grid: { borderDash: [4, 4] },
+                            title: { display: true, text: 'Number of Employees' }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+     }"
+     x-init="initChart()">
+    
+    <div class="flex justify-between items-start mb-4">
+        <div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Burnout Trend (8 Weeks)</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Anonymized team health statuses over time</p>
+        </div>
+        <div class="flex gap-4">
+            <div class="flex flex-col items-center">
+                <span class="text-xs text-gray-500 uppercase">Healthy</span>
+                <span class="text-lg font-bold text-green-500">{{ distribution.green|default:0 }}</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-xs text-gray-500 uppercase">At Risk</span>
+                <span class="text-lg font-bold text-yellow-500">{{ distribution.yellow|default:0 }}</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-xs text-gray-500 uppercase">Burnout</span>
+                <span class="text-lg font-bold text-red-500">{{ distribution.red|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="relative w-full flex-grow min-h-[300px]">
+        <canvas x-ref="canvas"></canvas>
+    </div>
+</div>

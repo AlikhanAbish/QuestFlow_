@@ -1,0 +1,18 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_content %}
+<h1 class="text-3xl font-semibold text-gray-800 dark:text-white mb-6">Create Badge</h1>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 max-w-2xl">
+    <form method="post" enctype="multipart/form-data" action="{% url 'admin_panel:gamification-badge-create' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="mt-6">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Create
+            </button>
+            <a href="{% url 'admin_panel:gamification-badges' %}" class="ml-4 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

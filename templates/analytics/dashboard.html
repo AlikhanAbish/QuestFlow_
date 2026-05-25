@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block page_title %}Team Analytics — QuestFlow{% endblock %}
+
+{% block content %}
+<div class="min-h-screen" x-data="{}">
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold text-white tracking-tight">
+        Team Analytics
+        <span class="ml-2 text-lg font-normal text-indigo-400">
+          {% if team %}{{ team.name }}{% endif %}
+        </span>
+      </h1>
+      <p class="mt-1 text-sm text-gray-400">Real-time insights into performance, engagement and wellbeing.</p>
+    </div>
+    <a href="{% url 'accounts:dashboard-manager' %}"
+       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-all border border-white/10">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <!-- ── KPI Summary Cards ─────────────────────────────────────────── -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <!-- Team Members -->
+    <div class="glass-dark rounded-2xl p-5 border border-white/5 flex flex-col items-center text-center hover:border-indigo-500/40 transition-all group">
+      <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center mb-3 group-hover:bg-indigo-500/30 transition-all">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-white">{{ summary.total_members }}</p>
+      <p class="text-xs text-gray-400 mt-1">Team Members</p>
+    </div>
+
+    <!-- Active Tasks -->
+    <div class="glass-dark rounded-2xl p-5 border border-white/5 flex flex-col items-center text-center hover:border-blue-500/40 transition-all group">
+      <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3 group-hover:bg-blue-500/30 transition-all">
+        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-white">{{ summary.active_tasks }}</p>
+      <p class="text-xs text-gray-400 mt-1">Active Tasks</p>
+    </div>
+
+    <!-- Done Tasks -->
+    <div class="glass-dark rounded-2xl p-5 border border-white/5 flex flex-col items-center text-center hover:border-emerald-500/40 transition-all group">
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3 group-hover:bg-emerald-500/30 transition-all">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-white">{{ summary.done_tasks }}</p>
+      <p class="text-xs text-gray-400 mt-1">Done (30d)</p>
+    </div>
+
+    <!-- Overdue Tasks -->
+    <div class="glass-dark rounded-2xl p-5 border border-white/5 flex flex-col items-center text-center hover:border-red-500/40 transition-all group">
+      <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center mb-3 group-hover:bg-red-500/30 transition-all">
+        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-white">{{ summary.overdue_tasks }}</p>
+      <p class="text-xs text-gray-400 mt-1">Overdue</p>
+    </div>
+
+    <!-- Total XP -->
+    <div class="glass-dark rounded-2xl p-5 border border-white/5 flex flex-col items-center text-center hover:border-amber-500/40 transition-all group">
+      <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center mb-3 group-hover:bg-amber-500/30 transition-all">
+        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <p class="text-2xl font-bold text-white">{{ summary.total_xp|floatformat:0 }}</p>
+      <p class="text-xs text-gray-400 mt-1">Team XP</p>
+    </div>
+  </div>
+
+  <!-- ── Charts Row 1: Tasks + XP ──────────────────────────────────── -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+
+    <!-- Tasks Completion Chart -->
+    <div class="glass-dark rounded-2xl border border-white/5 overflow-hidden">
+      <div class="px-6 pt-6 pb-2 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white">Task Completion</h3>
+          <p class="text-xs text-gray-400 mt-0.5">% on time vs overdue — last 30 days</p>
+        </div>
+        <span class="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">30 days</span>
+      </div>
+      <div id="tasks-chart-container"
+           hx-get="{% url 'analytics:tasks-chart' %}"
+           hx-trigger="load"
+           hx-swap="innerHTML"
+           class="p-6">
+        {% include 'analytics/partials/_chart_skeleton.html' %}
+      </div>
+    </div>
+
+    <!-- XP Dynamics Chart -->
+    <div class="glass-dark rounded-2xl border border-white/5 overflow-hidden">
+      <div class="px-6 pt-6 pb-2 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white">XP Dynamics</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Daily XP earned by team — last 30 days</p>
+        </div>
+        <span class="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">30 days</span>
+      </div>
+      <div id="xp-chart-container"
+           hx-get="{% url 'analytics:xp-chart' %}"
+           hx-trigger="load"
+           hx-swap="innerHTML"
+           class="p-6">
+        {% include 'analytics/partials/_chart_skeleton.html' %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Charts Row 2: Burnout + Ranking ───────────────────────────── -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+
+    <!-- Burnout Trend Chart (spans 2 cols) -->
+    <div class="glass-dark rounded-2xl border border-white/5 overflow-hidden xl:col-span-2">
+      <div class="px-6 pt-6 pb-2 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white">Burnout Trend</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Weekly MBI scores — consenting members only</p>
+        </div>
+        <span class="text-xs px-2 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">8 weeks</span>
+      </div>
+      <div id="burnout-trend-container"
+           hx-get="{% url 'analytics:burnout-trend' %}"
+           hx-trigger="load"
+           hx-swap="innerHTML"
+           class="p-6">
+        {% include 'analytics/partials/_chart_skeleton.html' %}
+      </div>
+    </div>
+
+    <!-- Activity Ranking -->
+    <div class="glass-dark rounded-2xl border border-white/5 overflow-hidden">
+      <div class="px-6 pt-6 pb-2">
+        <h3 class="text-base font-bold text-white">Activity Ranking</h3>
+        <p class="text-xs text-gray-400 mt-0.5">By total XP earned</p>
+      </div>
+      <div id="activity-ranking-container"
+           hx-get="{% url 'analytics:activity-ranking' %}"
+           hx-trigger="load"
+           hx-swap="innerHTML"
+           class="p-4">
+        {% include 'analytics/partials/_chart_skeleton.html' %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

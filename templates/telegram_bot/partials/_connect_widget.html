@@ -1,0 +1,54 @@
+{% load static %}
+{# Telegram Connect widget — loaded via hx-get or rendered server-side inside profile.html #}
+
+<div id="telegram-connect-widget" class="space-y-4">
+
+  {% if already_linked %}
+    {# ── LINKED STATE ── #}
+    <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+      <div class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-xl">
+        ✅
+      </div>
+      <div>
+        <p class="font-semibold text-emerald-400 text-sm">Telegram Connected</p>
+        <p class="text-xs text-zinc-400 mt-0.5">You're all set — the bot will send you reminders and alerts.</p>
+      </div>
+    </div>
+
+    {# Re-link option #}
+    <details class="text-xs text-zinc-500 cursor-pointer">
+      <summary class="hover:text-zinc-300 transition-colors">Re-link Telegram account</summary>
+      <div class="mt-3">
+        {% include "telegram_bot/partials/_link_instructions.html" %}
+      </div>
+    </details>
+
+  {% else %}
+    {# ── NOT LINKED STATE ── #}
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+      <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-xl">
+        🤖
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-blue-300 text-sm">Connect Telegram</p>
+        <p class="text-xs text-zinc-400 mt-1">
+          Link your Telegram account to receive daily reminders, self-assessment nudges, and burnout alerts.
+        </p>
+      </div>
+    </div>
+
+    {% include "telegram_bot/partials/_link_instructions.html" %}
+
+    {# Refresh token button #}
+    <button
+      hx-post="{% url 'telegram_bot:connect' %}"
+      hx-target="#telegram-connect-widget"
+      hx-swap="outerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors underline underline-offset-2"
+    >
+      🔄 Generate new link
+    </button>
+  {% endif %}
+
+</div>

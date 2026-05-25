@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QuestFlow{% endblock %}</title>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+
+    <!-- Tailwind CSS (via CDN for development, should be built in prod) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { "50": "#eff6ff", "100": "#dbeafe", "200": "#bfdbfe", "300": "#93c5fd", "400": "#60a5fa", "500": "#3b82f6", "600": "#2563eb", "700": "#1d4ed8", "800": "#1e40af", "900": "#1e3a8a", "950": "#172554" },
+                        dark: { "bg": "#0f111a", "card": "#1e2130", "border": "#2d3142" }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/10 backdrop-blur-lg border border-white/20;
+            }
+            .glass-dark {
+                @apply bg-dark-card/60 backdrop-blur-xl border border-white/5;
+            }
+            .form-input {
+                @apply w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-300;
+            }
+            .form-label {
+                @apply block text-sm font-medium text-gray-300 mb-2;
+            }
+            .btn-primary {
+                @apply w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-xl border border-transparent bg-gradient-to-r from-primary-600 to-indigo-600 text-white hover:from-primary-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50 disabled:pointer-events-none transition-all duration-300 shadow-lg shadow-primary-500/30;
+            }
+            .errorlist {
+                @apply text-red-400 text-xs mt-1 space-y-1 pl-1;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+
+<body class="bg-dark-bg text-gray-100 min-h-screen font-sans selection:bg-primary-500/30">
+
+    <!-- Global Messages Toast -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {% if messages %}
+        {% for message in messages %}
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 sm:scale-100"
+            x-transition:leave-end="opacity-0 sm:scale-95"
+            class="max-w-xs bg-dark-card border border-white/10 rounded-xl shadow-lg shadow-black/50 overflow-hidden"
+            role="alert">
+            <div class="p-4 flex items-center gap-4">
+                {% if message.tags == 'error' %}
+                <div class="text-red-400">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                {% else %}
+                <div class="text-green-400">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="text-sm font-medium text-white">
+                    {{ message }}
+                </div>
+                <button @click="show = false" class="ml-auto text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Layout -->
+    {% if user.is_authenticated %}
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-dark-card border-r border-white/5 flex flex-col z-20">
+            <div class="p-6 flex items-center gap-3">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">QuestFlow</span>
+            </div>
+
+            <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+                {% if user.role == 'manager' or user.role == 'admin' %}
+                <a href="{% url 'accounts:dashboard-manager' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if request.resolver_match.url_name == 'dashboard-manager' %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    <span class="font-medium text-sm">Dashboard</span>
+                </a>
+                <a href="{% url 'companies:company_settings' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if request.resolver_match.namespace == 'companies' %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
+                    <span class="font-medium text-sm">Company Settings</span>
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:dashboard-employee' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if request.resolver_match.url_name == 'dashboard-employee' %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    <span class="font-medium text-sm">Dashboard</span>
+                </a>
+                {% endif %}
+                <a href="{% url 'tasks:task_list' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if 'task' in request.resolver_match.url_name %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                        </path>
+                    </svg>
+                    <span class="font-medium text-sm">Tasks</span>
+                </a>
+                <a href="{% url 'accounts:profile' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if request.resolver_match.url_name == 'profile' %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span class="font-medium text-sm">Profile</span>
+                </a>
+                <a href="{% url 'notifications:list' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if request.resolver_match.namespace == 'notifications' %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="font-medium text-sm">Notifications</span>
+                </a>
+                
+                {% if user.role == 'admin' %}
+                <a href="{% url 'admin_panel:dashboard' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl {% if request.resolver_match.namespace == 'admin_panel' %}bg-primary-500/10 text-primary-400 border border-primary-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %} transition-all duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="font-medium text-sm">Admin Panel</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="p-4 border-t border-white/5">
+                <form action="{% url 'accounts:logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col relative overflow-hidden bg-dark-bg">
+            <!-- Background effects -->
+            <div
+                class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-500/10 rounded-full mix-blend-screen filter blur-[120px] opacity-50 animate-blob pointer-events-none">
+            </div>
+
+            <!-- Top Header -->
+            <header
+                class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-dark-card/50 backdrop-blur-xl z-10">
+                <h1 class="text-xl font-semibold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="flex items-center gap-4">
+                    <!-- Live Notifications Bell -->
+                    {% include "partials/_notifications.html" %}
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8 z-10" id="main-content">
+                <div class="max-w-7xl mx-auto w-full {% block auth_container_class %}{% endblock %}">
+                    {% else %}
+                    <!-- Guest / Auth Layout -->
+                    <div class="flex flex-col min-h-screen">
+                        <main class="flex-grow flex items-center justify-center p-4 relative overflow-hidden">
+                            <!-- Background effects -->
+                            <div
+                                class="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-blob">
+                            </div>
+                            <div
+                                class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-blob animation-delay-2000">
+                            </div>
+
+                            <!-- Page Content -->
+                            <div class="z-10 w-full {% block guest_container_class %}max-w-md{% endblock %}"
+                                id="main-content">
+                                {% endif %}
+
+                                {% block content %}{% endblock %}
+
+                                {% if user.is_authenticated %}
+                            </div>
+                    </div>
+        </main>
+    </div>
+    {% else %}
+    </div>
+    </main>
+    </div>
+    {% endif %}
+
+    <style>
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+
+        @keyframes blob {
+            0% {
+                transform: translate(0px, 0px) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1);
+            }
+        }
+    </style>
+
+    <!-- CSRF for all HTMX requests -->
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (token) {
+                event.detail.headers['X-CSRFToken'] = token;
+            }
+        });
+    </script>
+</body>
+
+</html>

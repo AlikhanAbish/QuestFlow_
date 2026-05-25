@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Burnout Self-Assessment{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">Weekly Burnout Assessment</h1>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Please answer the following questions to help us evaluate your well-being.
+            Your score will remain private unless you give explicit manager consent.
+        </p>
+    </div>
+
+    <div id="assessment-container" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        {% if already_submitted %}
+            {% include 'partials/_burnout_message.html' with type='success' message='Вы уже прошли опрос на этой неделе. Спасибо!' %}
+        {% else %}
+            {% include 'partials/_burnout_form.html' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

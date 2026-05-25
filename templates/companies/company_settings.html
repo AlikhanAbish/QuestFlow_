@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Company Settings | QuestFlow{% endblock %}
+{% block page_title %}Company Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    {% if company %}
+    <div class="glass-dark rounded-2xl p-6 sm:p-8 border border-white/5">
+        <h2 class="text-xl font-bold text-white mb-6">Company details</h2>
+        {% include 'companies/partials/_company_settings_form.html' %}
+    </div>
+
+    <div class="glass-dark rounded-2xl p-6 sm:p-8 border border-white/5">
+        {% include 'companies/partials/_teams_section.html' %}
+    </div>
+
+    <div class="glass-dark rounded-2xl p-6 sm:p-8 border border-white/5">
+        <h2 class="text-xl font-bold text-white mb-2">Invite team members</h2>
+        <p class="text-sm text-gray-400 mb-6">Send email invitations to join your company on QuestFlow.</p>
+
+        <div id="invite-status-banner"></div>
+
+        <div id="invite-form-container" class="mb-8">
+            {% include 'companies/partials/_invite_form.html' with invite_form=invite_form company=company %}
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-4">Pending invitations</h3>
+        <div id="pending-invitations-container">
+            {% include 'companies/partials/_pending_invitations.html' with pending_invitations=pending_invitations %}
+        </div>
+    </div>
+    {% else %}
+    <div class="glass-dark rounded-2xl p-6 sm:p-8 border border-white/5">
+        <h2 class="text-xl font-bold text-white mb-2">Create your company</h2>
+        {% include 'companies/partials/_company_create_form.html' %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

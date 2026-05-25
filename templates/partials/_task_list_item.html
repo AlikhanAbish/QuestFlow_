@@ -1,0 +1,64 @@
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0">
+                {% if task.priority == 4 %}
+                    <span class="inline-block h-3 w-3 rounded-full bg-red-500 animate-pulse" title="Critical"></span>
+                {% elif task.priority == 3 %}
+                    <span class="inline-block h-3 w-3 rounded-full bg-orange-500" title="High"></span>
+                {% elif task.priority == 2 %}
+                    <span class="inline-block h-3 w-3 rounded-full bg-yellow-400" title="Medium"></span>
+                {% else %}
+                    <span class="inline-block h-3 w-3 rounded-full bg-green-400" title="Low"></span>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{% url 'tasks:task_detail' task.pk %}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors">
+                    {{ task.title }}
+                </a>
+                <div class="mt-1 flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>#{{ task.id }}</span>
+                    <span>&middot;</span>
+                    <span>Due: {% if task.deadline %}{{ task.deadline|date:"M d, Y" }}{% else %}No deadline{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                {% if task.assigned_to %}
+                    <div class="flex items-center" title="Assigned to {{ task.assigned_to.get_full_name }}">
+                        {% if task.assigned_to.avatar %}
+                            <img class="h-6 w-6 rounded-full" src="{{ task.assigned_to.avatar.url }}" alt="">
+                        {% else %}
+                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-500">
+                                <span class="text-xs font-medium leading-none text-white">{{ task.assigned_to.first_name|first|default:"U" }}</span>
+                            </span>
+                        {% endif %}
+                        <span class="ml-2">{{ task.assigned_to.get_full_name }}</span>
+                    </div>
+                {% else %}
+                    Unassigned
+                {% endif %}
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <select 
+                    hx-post="{% url 'tasks:task_status_update' task.pk %}"
+                    hx-trigger="change"
+                    hx-swap="none"
+                    name="status"
+                    class="block w-full pl-3 pr-10 py-1 text-xs border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md transition-colors
+                    {% if task.status == 'done' %}text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400
+                    {% elif task.status == 'overdue' %}text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400
+                    {% elif task.status == 'in_progress' %}text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400
+                    {% else %}text-gray-600 bg-gray-50 dark:bg-gray-800 dark:text-gray-300{% endif %}"
+                >
+                    <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
+                    <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="done" {% if task.status == 'done' %}selected{% endif %}>Done</option>
+                    <option value="overdue" {% if task.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Team Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                Team Analytics Dashboard
+            </h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Performance, Engagement, and Wellness metrics for team <span class="font-semibold text-primary-600">{{ team.name }}</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <!-- Total Members -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Members</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ summary.total_members }}</p>
+        </div>
+        
+        <!-- Active Tasks -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Active Tasks</p>
+            <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ summary.active_tasks }}</p>
+        </div>
+        
+        <!-- Done Tasks -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Done Tasks</p>
+            <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ summary.done_tasks }}</p>
+        </div>
+        
+        <!-- Overdue Tasks -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Overdue Tasks</p>
+            <p class="text-3xl font-bold text-red-600 dark:text-red-400">{{ summary.overdue_tasks }}</p>
+        </div>
+        
+        <!-- Total XP -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Team XP</p>
+            <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">{{ summary.total_xp }}</p>
+        </div>
+    </div>
+
+    <!-- Detailed Metrics Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Task Metrics Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Task Efficiency</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">On-Time Completion</span>
+                    <span class="text-lg font-semibold text-gray-900 dark:text-white">{{ task_metrics.pct_on_time }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div class="bg-green-500 h-2.5 rounded-full" style="width: {{ task_metrics.pct_on_time }}%"></div>
+                </div>
+                
+                <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-50 dark:border-gray-700">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Avg Completion Time</span>
+                    <span class="text-md font-semibold text-gray-900 dark:text-white">
+                        {% if task_metrics.avg_completion_time %}{{ task_metrics.avg_completion_time }}{% else %}N/A{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Most Active Members -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Top Performers</h2>
+            <ul class="space-y-3">
+                {% for member in engagement_rating.most_active %}
+                <li class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-xs mr-3">
+                            {{ member.user.username|make_list|first|upper }}
+                        </div>
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ member.user.username }}</span>
+                    </div>
+                    <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ member.total_xp }} XP</span>
+                </li>
+                {% empty %}
+                <li class="text-sm text-gray-500 italic">No active members found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Least Active Members -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Needs Attention</h2>
+            <ul class="space-y-3">
+                {% for member in engagement_rating.least_active %}
+                <li class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 flex items-center justify-center font-bold text-xs mr-3">
+                            {{ member.user.username|make_list|first|upper }}
+                        </div>
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ member.user.username }}</span>
+                    </div>
+                    <span class="text-sm font-bold text-orange-600 dark:text-orange-400">{{ member.total_xp }} XP</span>
+                </li>
+                {% empty %}
+                <li class="text-sm text-gray-500 italic">No members found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+    </div>
+
+    <!-- HTMX Placeholder Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Tasks Chart Placeholder -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 min-h-[300px] flex items-center justify-center"
+             hx-get="{% url 'analytics:tasks-chart' %}" 
+             hx-trigger="load">
+            <div class="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                <svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading Tasks Chart...</span>
+            </div>
+        </div>
+
+        <!-- XP Chart Placeholder -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 min-h-[300px] flex items-center justify-center"
+             hx-get="{% url 'analytics:xp-chart' %}" 
+             hx-trigger="load">
+             <div class="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                <svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading XP Chart...</span>
+            </div>
+        </div>
+
+        <!-- Burnout Trend Placeholder (Full Width) -->
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 min-h-[350px] flex items-center justify-center"
+             hx-get="{% url 'analytics:burnout-trend' %}" 
+             hx-trigger="load">
+             <div class="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                <svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading Burnout Trend...</span>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock content %}

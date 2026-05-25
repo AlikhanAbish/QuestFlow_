@@ -1,0 +1,20 @@
+{% if email_sent %}
+<div id="invite-status-banner" hx-swap-oob="true" class="mb-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-300 space-y-2">
+    <p>SMTP accepted the invitation for <strong>{{ invite_email }}</strong>.</p>
+    <p class="text-emerald-400/80 text-xs">
+        If nothing arrives in 5–10 minutes: check Spam/Promotions, confirm the recipient address,
+        and open <strong>Brevo → Transactional → Logs</strong> for delivery status.
+        <code class="text-emerald-300">DEFAULT_FROM_EMAIL</code> must be a verified sender in Brevo (not <code>*@smtp-brevo.com</code>).
+    </p>
+</div>
+{% elif status_error %}
+<div id="invite-status-banner" hx-swap-oob="true" class="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-300">
+    {{ status_error }}
+</div>
+{% endif %}
+
+{% include 'companies/partials/_pending_invitations.html' %}
+
+<div id="invite-form-container" hx-swap-oob="innerHTML">
+    {% include 'companies/partials/_invite_form.html' %}
+</div>

@@ -1,0 +1,60 @@
+<div class="glass-dark rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden">
+    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+        Burnout Status
+    </h3>
+    
+    <div class="flex items-center gap-4">
+        <div class="relative flex h-14 w-14 shrink-0">
+            {% if burnout_status == 'green' %}
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20"></span>
+                <div class="relative inline-flex rounded-full h-14 w-14 bg-emerald-500/20 border-2 border-emerald-500 items-center justify-center">
+                    <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            {% elif burnout_status == 'yellow' %}
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-20"></span>
+                <div class="relative inline-flex rounded-full h-14 w-14 bg-yellow-500/20 border-2 border-yellow-500 items-center justify-center">
+                    <svg class="w-7 h-7 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+            {% else %}
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-20"></span>
+                <div class="relative inline-flex rounded-full h-14 w-14 bg-red-500/20 border-2 border-red-500 items-center justify-center">
+                    <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div>
+            <p class="text-sm text-gray-400 mb-1">Your current state</p>
+            <p class="text-lg font-bold
+                {% if burnout_status == 'green' %}text-emerald-400
+                {% elif burnout_status == 'yellow' %}text-yellow-400
+                {% else %}text-red-400{% endif %}">
+                {{ burnout_label }}
+            </p>
+        </div>
+    </div>
+    
+    <div class="mt-4 pt-4 border-t border-white/5 space-y-3">
+        <a href="{% url 'burnout:assessment' %}" class="text-xs text-primary-400 hover:text-primary-300 font-medium inline-flex items-center gap-1 transition-colors">
+            Take weekly self-assessment
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        
+        {% if burnout_score %}
+        <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>Share with Manager</span>
+            <form hx-post="{% url 'accounts:dashboard-burnout-badge-toggle' %}" 
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  hx-target="closest .glass-dark" 
+                  hx-swap="outerHTML">
+                <button type="submit" 
+                        class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-bg {% if burnout_score.manager_consent %}bg-emerald-500{% else %}bg-gray-600{% endif %}">
+                    <span class="sr-only">Toggle manager consent</span>
+                    <span class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform {% if burnout_score.manager_consent %}translate-x-5{% else %}translate-x-1{% endif %}"></span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block page_title %}Manager Dashboard{% endblock %}
+
+{% block content %}
+    <div class="mb-8 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-white">Manager Dashboard</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Team Burnout Overview -->
+        <div class="glass-dark rounded-2xl p-6 border border-white/5 lg:col-span-4">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                Team Burnout Overview
+                <span class="text-xs font-normal text-gray-400 ml-2">(Anonymized, {{ burnout_stats.total }} team members shared data)</span>
+            </h3>
+            
+            {% if burnout_stats.total > 0 %}
+            <div class="flex h-4 w-full rounded-full overflow-hidden bg-white/5">
+                {% widthratio burnout_stats.green burnout_stats.total 100 as green_pct %}
+                {% widthratio burnout_stats.yellow burnout_stats.total 100 as yellow_pct %}
+                {% widthratio burnout_stats.red burnout_stats.total 100 as red_pct %}
+                
+                <div class="bg-emerald-500 transition-all duration-500" style="width: {{ green_pct }}%"></div>
+                <div class="bg-yellow-500 transition-all duration-500" style="width: {{ yellow_pct }}%"></div>
+                <div class="bg-red-500 transition-all duration-500" style="width: {{ red_pct }}%"></div>
+            </div>
+            
+            <div class="flex justify-between mt-4 text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    <span class="text-gray-300">Healthy ({{ burnout_stats.green }})</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <span class="text-gray-300">At Risk ({{ burnout_stats.yellow }})</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span class="text-gray-300">Burned Out ({{ burnout_stats.red }})</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-6">
+                <p class="text-gray-400">No burnout data shared by team members yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Company Leaderboard (employees only) -->
+        <div class="glass-dark rounded-2xl p-6 border border-white/5 lg:col-span-4">
+            <div hx-get="{% url 'gamification:leaderboard' %}"
+                 hx-trigger="load, taskStatusUpdated from:body"
+                 hx-swap="innerHTML">
+                <div class="animate-pulse space-y-3">
+                    <div class="h-6 bg-white/10 rounded w-1/3"></div>
+                    <div class="h-12 bg-white/5 rounded-xl"></div>
+                    <div class="h-12 bg-white/5 rounded-xl"></div>
+                    <div class="h-12 bg-white/5 rounded-xl"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members List / Profile -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-white mb-4">Team Members</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for member in team_members %}
+            <div class="glass-dark rounded-xl p-6 border border-white/5 flex flex-col hover:border-indigo-500/50 transition-all">
+                <div class="flex items-center gap-4 mb-4">
+                    {% if member.avatar %}
+                    <img src="{{ member.avatar.url }}" alt="{{ member.get_full_name }}" class="w-12 h-12 rounded-full border-2 border-indigo-500">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold border-2 border-indigo-500 text-xl">
+                        {{ member.first_name|first|default:member.email|first|upper }}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h4 class="text-white font-bold">{{ member.get_full_name|default:member.email }}</h4>
+                        <p class="text-gray-400 text-sm">{{ member.role|title }}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 mt-auto border-t border-white/5 pt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Level:</span>
+                        <span class="font-bold text-indigo-400">{{ member.level_data.level|default:"1" }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">XP:</span>
+                        <span class="font-bold text-amber-400">{{ member.level_data.total_xp|default:"0" }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Streak:</span>
+                        <span class="font-bold text-orange-400">{{ member.streak.current|default:"0" }} days</span>
+                    </div>
+                    <div class="flex justify-between text-sm items-center">
+                        <span class="text-gray-400">Burnout Status:</span>
+                        {% if member.burnout_score and member.burnout_score.manager_consent %}
+                            {% if member.burnout_score.score == 'green' %}
+                                <span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs">Healthy</span>
+                            {% elif member.burnout_score.score == 'yellow' %}
+                                <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs">At Risk</span>
+                            {% elif member.burnout_score.score == 'red' %}
+                                <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs">Burned Out</span>
+                            {% else %}
+                                <span class="text-gray-500 text-xs">Unknown</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-gray-500 italic text-xs">No Consent</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-8 text-gray-400 glass-dark rounded-xl border border-white/5">
+                No other members in your team yet.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Hidden form for CSRF token required by Kanban JS -->
+    <form style="display: none;">{% csrf_token %}</form>
+
+    <!-- Team Kanban -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-white mb-4">Team Kanban</h3>
+        {% if kanban_columns %}
+            <!-- We wrap in overflow-x-auto to handle Kanban horizontal scroll -->
+            <div class="overflow-x-auto pb-4">
+                {% include "partials/_task_kanban.html" %}
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-gray-400 glass-dark rounded-xl border border-white/5">
+                Kanban not available or no team tasks.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

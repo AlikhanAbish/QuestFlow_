@@ -1,0 +1,52 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_content %}
+<h1 class="text-3xl font-semibold text-gray-800 dark:text-white mb-6">Dashboard Overview</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Total Users -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-wider">Total Users</h3>
+        <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2">{{ total_users }}</p>
+    </div>
+
+    <!-- Total Companies -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-wider">Total Companies</h3>
+        <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2">{{ total_companies }}</p>
+    </div>
+
+    <!-- Active Companies -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-wider">Active Companies</h3>
+        <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2">{{ active_companies }}</p>
+    </div>
+</div>
+
+<!-- Recent Audit Logs -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Activity</h3>
+    </div>
+    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+        {% for log in recent_logs %}
+        <li class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-800 dark:text-white">{{ log.user.email }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ log.action }}</p>
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ log.created_at|date:"M d, H:i" }}
+                </div>
+            </div>
+        </li>
+        {% empty %}
+        <li class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No recent activity.</li>
+        {% endfor %}
+    </ul>
+    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+        <a href="{% url 'admin_panel:audit-log' %}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">View all logs &rarr;</a>
+    </div>
+</div>
+{% endblock %}

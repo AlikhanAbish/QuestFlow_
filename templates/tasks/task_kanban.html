@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Kanban Board | QuestFlow{% endblock %}
+
+{% block content %}
+<div class="max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-4rem)] flex flex-col">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 flex-shrink-0">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Kanban Board</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Drag and drop tasks to update their status.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'tasks:task_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                List View
+            </a>
+            {% if request.user.role in 'manager,admin' %}
+            <button 
+                hx-get="{% url 'tasks:task_create' %}" 
+                hx-target="#modal-content" 
+                @click="openModal = true"
+                class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                New Task
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Kanban Board Container -->
+    <div id="kanban-container" class="flex-grow overflow-x-auto pb-4" hx-get="{% url 'tasks:task_kanban' %}" hx-trigger="taskStatusUpdated from:body, taskCreated from:body, taskDeleted from:body">
+        {% include "partials/_task_kanban.html" %}
+    </div>
+</div>
+
+<!-- Modal Container for Form -->
+<div x-data="{ openModal: false }" @keydown.escape.window="openModal = false">
+    <div x-show="openModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="openModal" x-transition.opacity class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="openModal = false" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="openModal" x-transition.scale.origin.bottom class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div id="modal-content">
+                    <!-- HTMX will load the form here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

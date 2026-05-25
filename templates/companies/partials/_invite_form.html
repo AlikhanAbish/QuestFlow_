@@ -1,0 +1,28 @@
+<form hx-post="{% url 'companies:team_invite' %}"
+      hx-target="#pending-invitations-container"
+      hx-swap="innerHTML"
+      class="space-y-4">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+            <label for="{{ invite_form.email.id_for_label }}" class="form-label">{{ invite_form.email.label }}</label>
+            {{ invite_form.email }}
+            {% if invite_form.email.errors %}
+            <div class="errorlist">{{ invite_form.email.errors }}</div>
+            {% endif %}
+        </div>
+        <div>
+            <label for="{{ invite_form.role.id_for_label }}" class="form-label">{{ invite_form.role.label }}</label>
+            {{ invite_form.role }}
+        </div>
+        <div>
+            <label for="{{ invite_form.team.id_for_label }}" class="form-label">{{ invite_form.team.label }}</label>
+            {{ invite_form.team }}
+        </div>
+    </div>
+
+    <button type="submit" class="btn-primary max-w-xs">
+        Create &amp; send invitation
+    </button>
+</form>

@@ -1,0 +1,47 @@
+{% load humanize %}
+{# Single notification item — used in both dropdown and full list #}
+
+<div id="notif-{{ notif.pk }}"
+     class="px-4 py-3 flex gap-3 {% if not notif.is_read %}bg-indigo-500/5{% endif %} hover:bg-white/5 transition-colors group relative">
+
+    {# Unread dot #}
+    {% if not notif.is_read %}
+    <span class="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0"></span>
+    {% endif %}
+
+    {# Icon #}
+    <div class="w-9 h-9 flex-shrink-0 rounded-xl {{ notif.color_class }} flex items-center justify-center text-base">
+        {{ notif.icon }}
+    </div>
+
+    {# Content #}
+    <div class="flex-1 min-w-0 pr-4">
+        <p class="text-sm font-medium text-white leading-snug truncate">{{ notif.title }}</p>
+        <p class="text-xs text-zinc-400 mt-0.5 leading-relaxed line-clamp-2">{{ notif.body }}</p>
+        <p class="text-[10px] text-zinc-500 mt-1">{{ notif.created_at|naturaltime }}</p>
+    </div>
+
+    {# Mark-read action (HTMX POST — shown on hover) #}
+    {% if not notif.is_read %}
+    <form method="post"
+          action="{% url 'notifications:mark-read' notif.pk %}"
+          hx-post="{% url 'notifications:mark-read' notif.pk %}"
+          hx-target="#notification-bell-wrapper"
+          hx-swap="innerHTML"
+          class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end pr-4 pointer-events-none group-hover:pointer-events-auto">
+        {% csrf_token %}
+        <button type="submit"
+                title="Mark as read"
+                class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white transition-all">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+        </button>
+    </form>
+    {% endif %}
+
+    {# Clickable overlay to action URL #}
+    {% if notif.action_url %}
+    <a href="{{ notif.action_url }}" class="absolute inset-0" aria-label="{{ notif.title }}"></a>
+    {% endif %}
+</div>

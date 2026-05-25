@@ -1,0 +1,57 @@
+<form hx-post="{% url 'burnout:assessment_submit' %}" 
+      hx-target="#assessment-container" 
+      hx-swap="innerHTML"
+      class="space-y-8 relative">
+    {% csrf_token %}
+    
+    {% if disabled %}
+    <div class="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[1px] rounded-lg"></div>
+    {% endif %}
+    
+    <!-- Exhaustion Section -->
+    <div class="space-y-4 relative z-0">
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Exhaustion</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Feelings of being emotionally overextended and exhausted by one's work.</p>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+            {% include 'partials/_burnout_question.html' with field=form.ex1 label="1. I feel emotionally drained from my work." disabled=disabled %}
+            {% include 'partials/_burnout_question.html' with field=form.ex2 label="2. I feel used up at the end of the workday." disabled=disabled %}
+            {% include 'partials/_burnout_question.html' with field=form.ex3 label="3. I feel fatigued when I get up in the morning and have to face another day on the job." disabled=disabled %}
+        </div>
+    </div>
+
+    <!-- Cynicism Section -->
+    <div class="space-y-4 relative z-0">
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-4 mt-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Cynicism (Depersonalization)</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Unfeeling and impersonal response toward recipients of one's service or care.</p>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+            {% include 'partials/_burnout_question.html' with field=form.cy1 label="4. I have become more callous toward people since I took this job." disabled=disabled %}
+            {% include 'partials/_burnout_question.html' with field=form.cy2 label="5. I worry that this job is hardening me emotionally." disabled=disabled %}
+            {% include 'partials/_burnout_question.html' with field=form.cy3 label="6. I don't really care what happens to some people." disabled=disabled %}
+        </div>
+    </div>
+
+    <!-- Professional Efficacy Section -->
+    <div class="space-y-4 relative z-0">
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-2 mb-4 mt-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Professional Efficacy</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Feelings of competence and successful achievement in one's work with people.</p>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+            {% include 'partials/_burnout_question.html' with field=form.ef1 label="7. I can easily understand how people feel about things." disabled=disabled %}
+            {% include 'partials/_burnout_question.html' with field=form.ef2 label="8. I deal very effectively with the problems of people." disabled=disabled %}
+            {% include 'partials/_burnout_question.html' with field=form.ef3 label="9. I feel I'm positively influencing other people's lives through my work." disabled=disabled %}
+        </div>
+    </div>
+
+    <div class="pt-6 flex justify-end relative z-0">
+        <button type="submit" 
+                class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                {% if disabled %}disabled{% endif %}>
+            Submit Assessment
+        </button>
+    </div>
+</form>

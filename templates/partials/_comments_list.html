@@ -1,0 +1,24 @@
+<div class="space-y-6">
+    {% for comment in comments %}
+        <div class="flex gap-x-4">
+            <div class="flex-shrink-0">
+                {% if comment.author.avatar %}
+                    <img class="h-10 w-10 rounded-full" src="{{ comment.author.avatar.url }}" alt="">
+                {% else %}
+                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gray-500">
+                        <span class="text-sm font-medium leading-none text-white">{{ comment.author.first_name|first|default:"U" }}</span>
+                    </span>
+                {% endif %}
+            </div>
+            <div class="flex-1 rounded-lg bg-white dark:bg-gray-800 p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-1">
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ comment.author.get_full_name }}</h4>
+                    <span class="text-xs text-gray-500">{{ comment.created_at|timesince }} ago</span>
+                </div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ comment.body }}</p>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-sm text-gray-500 dark:text-gray-400 italic">No comments yet. Be the first to comment!</p>
+    {% endfor %}
+</div>

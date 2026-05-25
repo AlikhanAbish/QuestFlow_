@@ -1,0 +1,19 @@
+<div class="flex items-center space-x-2">
+    {% if company.is_active %}
+    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        Active
+    </span>
+    <button hx-post="{% url 'admin_panel:company-deactivate' company.pk %}"
+            hx-target="#status-{{ company.pk }}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            class="text-xs text-red-600 hover:text-red-900 dark:text-red-400">Deactivate</button>
+    {% else %}
+    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+        Inactive
+    </span>
+    <button hx-post="{% url 'admin_panel:company-deactivate' company.pk %}"
+            hx-target="#status-{{ company.pk }}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            class="text-xs text-green-600 hover:text-green-900 dark:text-green-400">Activate</button>
+    {% endif %}
+</div>

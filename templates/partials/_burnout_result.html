@@ -1,0 +1,47 @@
+<div class="text-center py-8" id="burnout-result">
+    <div class="inline-flex items-center justify-center w-24 h-24 rounded-full mb-6 
+        {% if score.score == 'green' %}bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400
+        {% elif score.score == 'yellow' %}bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400
+        {% else %}bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400{% endif %}">
+        
+        {% if score.score == 'green' %}
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        {% elif score.score == 'yellow' %}
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        {% else %}
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        {% endif %}
+    </div>
+    
+    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Assessment Complete</h3>
+    
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+        Your current status is: 
+        <span class="font-bold px-3 py-1 rounded-full text-sm uppercase tracking-wide
+            {% if score.score == 'green' %}bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300
+            {% elif score.score == 'yellow' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300
+            {% else %}bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300{% endif %}">
+            {{ score.get_score_display }}
+        </span>
+    </p>
+
+    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 max-w-lg mx-auto text-left space-y-4">
+        <h4 class="font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Subscale Averages:</h4>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="text-gray-500 dark:text-gray-400">Exhaustion:</div>
+            <div class="font-medium text-gray-900 dark:text-white">{{ score.exhaustion_avg|floatformat:1 }} / 6.0</div>
+            
+            <div class="text-gray-500 dark:text-gray-400">Cynicism:</div>
+            <div class="font-medium text-gray-900 dark:text-white">{{ score.cynicism_avg|floatformat:1 }} / 6.0</div>
+            
+            <div class="text-gray-500 dark:text-gray-400">Professional Efficacy:</div>
+            <div class="font-medium text-gray-900 dark:text-white">{{ score.efficacy_avg|floatformat:1 }} / 6.0</div>
+        </div>
+    </div>
+    
+    <div class="mt-8">
+        <a href="{% url 'burnout:history' %}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+            View Assessment History &rarr;
+        </a>
+    </div>
+</div>

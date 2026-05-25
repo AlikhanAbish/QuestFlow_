@@ -1,0 +1,53 @@
+{% load humanize %}
+{# ─────────────────────────────────────────────────────────────────────────── #}
+{# Bell dropdown partial — loaded via HTMX, polled every 60 s                 #}
+{# Target: #notification-dropdown                                              #}
+{# ─────────────────────────────────────────────────────────────────────────── #}
+
+{# Unread badge count (outside dropdown — updates the pill on the bell icon) #}
+<span id="notif-count-badge"
+      class="{% if unread_count %}flex{% else %}hidden{% endif %} absolute -top-1 -right-1 items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full border-2 border-dark-card z-10">
+    {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
+</span>
+
+{# ── Dropdown panel ── #}
+<div class="absolute right-0 mt-3 w-80 bg-dark-card border border-white/10 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50">
+
+    {# Header #}
+    <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+        <span class="text-sm font-semibold text-white">Notifications</span>
+        {% if unread_count %}
+        <form method="post"
+              action="{% url 'notifications:mark-all-read' %}"
+              hx-post="{% url 'notifications:mark-all-read' %}"
+              hx-target="#notification-bell-wrapper"
+              hx-swap="innerHTML">
+            {% csrf_token %}
+            <button type="submit"
+                    class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
+                Mark all read
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {# Notification list #}
+    <div class="divide-y divide-white/5 max-h-96 overflow-y-auto">
+        {% for notif in notifications %}
+        {% include "notifications/partials/_notification_item.html" with notif=notif %}
+        {% empty %}
+        <div class="px-4 py-10 text-center">
+            <div class="text-4xl mb-2">🔔</div>
+            <p class="text-sm text-zinc-500">You're all caught up!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# Footer #}
+    <div class="px-4 py-3 border-t border-white/5 bg-dark-bg/40">
+        <a href="{% url 'notifications:list' %}"
+           class="block text-center text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium py-1">
+            See all notifications →
+        </a>
+    </div>
+</div>

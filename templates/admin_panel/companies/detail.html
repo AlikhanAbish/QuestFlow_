@@ -1,0 +1,31 @@
+{% extends "admin_panel/base_admin.html" %}
+
+{% block admin_content %}
+<h1 class="text-3xl font-semibold text-gray-800 dark:text-white mb-6">Company: {{ company.name }}</h1>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-8">
+        <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Slug</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ company.slug }}</dd>
+        </div>
+        <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                {{ company.is_active|yesno:"Active,Inactive" }}
+            </dd>
+        </div>
+        <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Max Users</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ company.max_users }}</dd>
+        </div>
+        <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ company.created_at|date }}</dd>
+        </div>
+    </dl>
+    <div class="mt-8 flex space-x-4">
+        <a href="{% url 'admin_panel:company-list' %}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400">&larr; Back to list</a>
+    </div>
+</div>
+{% endblock %}

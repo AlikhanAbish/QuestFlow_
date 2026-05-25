@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} | Tasks | QuestFlow{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" hx-get="{% url 'tasks:task_detail' task.pk %}" hx-trigger="taskUpdated from:body" hx-swap="outerHTML">
+    {% include "partials/_task_detail.html" %}
+</div>
+
+<!-- Modal Container for Form -->
+<div x-data="{ openModal: false }" @keydown.escape.window="openModal = false">
+    <div x-show="openModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="openModal" x-transition.opacity class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="openModal = false" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="openModal" x-transition.scale.origin.bottom class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div id="modal-content">
+                    <!-- HTMX will load the form here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

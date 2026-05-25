@@ -1,0 +1,13 @@
+You're invited to join {{ company_name }} on QuestFlow
+======================================================
+
+{{ invited_by_name }} has invited you to join {{ company_name }}{% if team_name %} (team: {{ team_name }}){% endif %} as {{ role_label }}.
+
+Accept your invitation:
+{{ accept_url }}
+
+This link expires on {{ expires_at|date:"F j, Y, g:i A" }} ({{ expiry_days }} days from sending).
+
+If you didn't expect this invitation, you can safely ignore this email.
+
+— QuestFlow

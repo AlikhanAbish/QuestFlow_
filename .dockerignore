@@ -1,0 +1,35 @@
+# Virtual environments
+.venv
+venv
+env
+ENV
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and media
+logs/
+media/
+staticfiles/
+
+# Docker
+Dockerfile
+.dockerignore
+.git
+.gitignore
+
+# uv specific
+uv.lock
