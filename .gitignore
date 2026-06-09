@@ -1,103 +1,102 @@
-# ========================
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.example
+
 # Python
-# ========================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-*.egg
-*.egg-info/
-dist/
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
 eggs/
-*.manifest
-*.spec
-pip-log.txt
-pip-delete-this-directory.txt
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# ========================
 # Virtual Environments
-# ========================
-.venv/
+.venv
 venv/
 ENV/
 env/
+env.bak/
+venv.bak/
 
-# ========================
 # Django
-# ========================
 *.log
+local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
-*.pot
-*.mo
+collected_static/
 
-# ========================
-# Environment & Secrets
-# ========================
-.env
-.env.local
-.env.production
-.env.staging
-# Keep the example for reference
-!.env.example
+# Celery
+celerybeat-schedule
+celerybeat.pid
+*.beat.db
 
-# ========================
-# Docker (volumes, overrides)
-# ========================
-docker-compose.override.yml
+# Docker
+.dockerignore
+Dockerfile.*
+.docker/
+!docker-compose.yml
+!docker-compose.prod.yml
 
-# ========================
-# IDE / Editors
-# ========================
+# Database
+*.db
+postgres_data/
+redis_data/
+
+# IDE & Editors
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-*.sublime-project
-*.sublime-workspace
-
-# ========================
-# OS Files
-# ========================
+*.swn
+*.pyc
 .DS_Store
 Thumbs.db
-Desktop.ini
-ehthumbs.db
 
-# ========================
-# Testing & Coverage
-# ========================
+# Testing
 .coverage
-.coverage.*
 htmlcov/
-.pytest_cache/
 .tox/
-nosetests.xml
-coverage.xml
-*.cover
+.nox/
+.cache
+.pytest_cache/
+.ruff_cache/
 
-# ========================
-# Celery
-# ========================
-celerybeat-schedule
-celerybeat.pid
+# Logs
+logs/
+*.log
 
-# ========================
-# Misc
-# ========================
-*.bak
-*.tmp
-*.temp
-.cache/
-*.log.*
+# Production / Deployment
+*.pem
+*.key
+*.crt
+
+# Temporary files
+tmp/
+temp/
+
+# Railway / Render specific
+.railway/
+.render/
+
+# Node (если вдруг понадобится)
 node_modules/
-
-# ========================
-# Agents / AI tooling
-# ========================
-.agents/
-.gemini/
