@@ -1,10 +1,14 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
-.env.example
+# ===============================================
+# Environment Variables (CRITICAL FOR SECURITY!)
+# ===============================================
+.env                    # Main env file with secrets
+.env.*.local           # Local override files
+.env.local             # Local override
+!.env.example          # BUT: Include example template
 
+# ===============================================
 # Python
+# ===============================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,7 +32,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# ===============================================
 # Virtual Environments
+# ===============================================
 .venv
 venv/
 ENV/
@@ -36,7 +42,9 @@ env/
 env.bak/
 venv.bak/
 
+# ===============================================
 # Django
+# ===============================================
 *.log
 local_settings.py
 db.sqlite3
@@ -45,58 +53,57 @@ media/
 staticfiles/
 collected_static/
 
+# ===============================================
 # Celery
+# ===============================================
 celerybeat-schedule
 celerybeat.pid
 *.beat.db
 
-# Docker
-.dockerignore
-Dockerfile.*
-.docker/
-!docker-compose.yml
-!docker-compose.prod.yml
-
-# Database
-*.db
+# ===============================================
+# Docker & Database Data
+# ===============================================
 postgres_data/
 redis_data/
+*.db
 
+# ===============================================
 # IDE & Editors
+# ===============================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *.swn
-*.pyc
 .DS_Store
 Thumbs.db
 
+# ===============================================
 # Testing
+# ===============================================
 .coverage
 htmlcov/
 .tox/
 .nox/
-.cache
 .pytest_cache/
 .ruff_cache/
 
-# Logs
+# ===============================================
+# Temporary & Logs
+# ===============================================
 logs/
-*.log
+tmp/
+temp/
 
-# Production / Deployment
+# ===============================================
+# Deployment
+# ===============================================
 *.pem
 *.key
 *.crt
 
-# Temporary files
-tmp/
-temp/
-
-# Railway / Render specific
-.railway/
-.render/
-
-# Node (если вдруг понадобится)
-node_modules/
+# ===============================================
+# AI/Copilot
+# ===============================================
+.agents
+.copilot
