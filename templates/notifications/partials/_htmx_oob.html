@@ -1,0 +1,42 @@
+{# OOB fragments — swapped on every HTMX list update (filters, pagination, mark-all) #}
+
+{% if is_manager_or_admin %}
+<div id="notif-scope-tabs" class="flex gap-2 flex-wrap" hx-swap-oob="true">
+    {% include "notifications/partials/_scope_tabs.html" %}
+</div>
+{% endif %}
+
+<div id="notif-filter-tabs" class="flex gap-2 flex-wrap" hx-swap-oob="true">
+    {% include "notifications/partials/_filter_tabs.html" %}
+</div>
+
+<div id="notif-feed-hint" class="text-xs text-cyan-400/80 hidden sm:block" hx-swap-oob="true">
+    {% if is_manager_or_admin and active_scope == 'team' %}
+        Team activity from your reports
+    {% endif %}
+</div>
+
+{% if refresh_header %}
+<div id="notif-header-meta" hx-swap-oob="true">
+    {% include "notifications/partials/_header_meta.html" %}
+</div>
+
+<div id="mark-all-read-container" hx-swap-oob="true">
+    {% if unread_count %}
+    <form method="post"
+          action="{% url 'notifications:mark-all-read' %}"
+          hx-post="{% url 'notifications:mark-all-read' %}?filter={{ active_filter }}&scope={{ active_scope }}"
+          hx-target="#notif-list"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+        <button type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Mark all as read
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,24 @@
+<button type="button"
+        hx-get="{% url 'notifications:list' %}?filter={{ active_filter }}&scope=all"
+        hx-target="#notif-list"
+        hx-swap="innerHTML"
+        class="px-4 py-1.5 rounded-xl text-sm font-medium border transition-all duration-200 {% if active_scope == 'all' %}bg-violet-500/20 text-violet-200 border-violet-400/40 shadow-sm shadow-violet-500/20 ring-1 ring-violet-400/30{% else %}bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border-transparent{% endif %}">
+    All
+    {% if unread_count %}<span class="ml-1 opacity-80">({{ unread_count }})</span>{% endif %}
+</button>
+<button type="button"
+        hx-get="{% url 'notifications:list' %}?filter={{ active_filter }}&scope=personal"
+        hx-target="#notif-list"
+        hx-swap="innerHTML"
+        class="px-4 py-1.5 rounded-xl text-sm font-medium border transition-all duration-200 {% if active_scope == 'personal' %}bg-indigo-500/20 text-indigo-200 border-indigo-400/40 shadow-sm shadow-indigo-500/20 ring-1 ring-indigo-400/30{% else %}bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border-transparent{% endif %}">
+    Personal
+    {% if personal_unread %}<span class="ml-1 opacity-80">({{ personal_unread }})</span>{% endif %}
+</button>
+<button type="button"
+        hx-get="{% url 'notifications:list' %}?filter={{ active_filter }}&scope=team"
+        hx-target="#notif-list"
+        hx-swap="innerHTML"
+        class="px-4 py-1.5 rounded-xl text-sm font-medium border transition-all duration-200 {% if active_scope == 'team' %}bg-cyan-500/20 text-cyan-200 border-cyan-400/40 shadow-sm shadow-cyan-500/20 ring-1 ring-cyan-400/30{% else %}bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border-transparent{% endif %}">
+    Team
+    {% if team_unread %}<span class="ml-1 opacity-80">({{ team_unread }})</span>{% endif %}
+</button>

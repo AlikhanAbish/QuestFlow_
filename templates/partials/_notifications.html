@@ -1,34 +1,27 @@
-{# ─────────────────────────────────────────────────────────────────────────── #}
-{# templates/partials/_notifications.html                                      #}
-{# Bell icon with live unread counter + Alpine.js dropdown toggle              #}
-{# Include this anywhere in the authenticated header.                          #}
-{# ─────────────────────────────────────────────────────────────────────────── #}
-
+{# Bell icon with live unread counter + Alpine.js dropdown toggle #}
 <div id="notification-bell-wrapper"
      class="relative"
      x-data="{ open: false }"
      @click.outside="open = false"
-     hx-get="{% url 'notifications:partial' %}"
-     hx-trigger="load, every 60s"
-     hx-target="#notification-bell-wrapper"
-     hx-swap="innerHTML">
+     @keydown.escape.window="open = false">
 
-    {# Bell button #}
     <button id="notif-bell-btn"
+            type="button"
             @click="open = !open"
             class="relative p-2 text-zinc-400 hover:text-white transition-colors rounded-xl hover:bg-white/5"
+            :aria-expanded="open"
+            aria-controls="notif-dropdown-panel"
             aria-label="Notifications">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
         </svg>
-        {# Unread badge — rendered by _bell_dropdown.html, starts hidden #}
         <span id="notif-count-badge"
               class="hidden absolute -top-1 -right-1 items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full border-2 border-dark-card z-10">
         </span>
     </button>
 
-    {# Dropdown — toggled by Alpine, populated by HTMX #}
+    {# Fixed panel — escapes header stacking context and overflow clipping #}
     <div x-show="open"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
@@ -37,8 +30,27 @@
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
          style="display:none"
-         class="absolute right-0 mt-3 w-80 bg-dark-card border border-white/10 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50"
-         id="notif-dropdown-panel">
-        {# Content injected by _bell_dropdown.html via hx-get above #}
+         id="notif-dropdown-panel"
+         class="fixed top-16 right-6 w-80 z-[9998] bg-dark-card/90 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/60 border border-white/10 overflow-hidden"
+         role="dialog"
+         aria-label="Notifications">
+
+        <button type="button"
+                @click="open = false"
+                class="absolute top-3 right-3 z-10 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="Close notifications">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <div id="notif-dropdown-content"
+             class="max-h-[28rem] flex flex-col"
+             hx-get="{% url 'notifications:partial' %}"
+             hx-trigger="load, every 60s"
+             hx-target="#notif-dropdown-content"
+             hx-swap="innerHTML">
+            <div class="px-4 py-10 text-center text-sm text-zinc-500">Loading…</div>
+        </div>
     </div>
 </div>

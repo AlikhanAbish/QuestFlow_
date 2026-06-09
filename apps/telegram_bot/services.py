@@ -39,7 +39,7 @@ class TelegramService:
         tg_user, created = TelegramUser.objects.get_or_create(
             user=user,
             defaults={
-                "telegram_id": 0,  # Placeholder until /start arrives
+                "telegram_id": None,
                 "is_active": False,
             },
         )
@@ -58,44 +58,73 @@ class TelegramService:
     ) -> "TelegramUser | None":
         """
         Called from /start <token> handler.
-        Finds the TelegramUser with matching connect_token, sets telegram_id,
+        Finds the TelegramUser with matching connect_token or user_id, sets telegram_id,
         marks it active. Returns None if token is invalid.
         """
         from .models import TelegramUser
+        import uuid
 
+        token_clean = token
+        if token.startswith("connect_"):
+            token_clean = token[8:]
+
+        tg_user = None
+        # Try to find by UUID connect_token first
         try:
+            uuid.UUID(token_clean)
             tg_user = TelegramUser.objects.select_related("user").get(
-                connect_token=token
+                connect_token=token_clean
             )
-        except TelegramUser.DoesNotExist:
-            logger.warning("link_account: invalid token %s", token)
-            return None
+        except (ValueError, TelegramUser.DoesNotExist):
+            # Fallback to query by user_id
+            try:
+                user_id = int(token_clean)
+                tg_user, created = TelegramUser.objects.select_related("user").get_or_create(
+                    user_id=user_id,
+                    defaults={
+                        "telegram_id": telegram_id,
+                        "is_active": True,
+                    }
+                )
+                if not created:
+                    tg_user.telegram_id = telegram_id
+                    tg_user.is_active = True
+            except (ValueError, TelegramUser.DoesNotExist, Exception) as exc:
+                logger.warning("link_account: invalid token or user_id %s: %s", token, exc)
+                return None
 
-        # If another Telegram account already used this telegram_id, update it
-        TelegramUser.objects.filter(telegram_id=telegram_id).exclude(
-            pk=tg_user.pk
-        ).delete()
+        if tg_user:
+            # If another Telegram account already used this telegram_id, update it
+            TelegramUser.objects.filter(telegram_id=telegram_id).exclude(
+                pk=tg_user.pk
+            ).delete()
 
-        tg_user.telegram_id = telegram_id
-        tg_user.username = username or ""
-        tg_user.first_name = first_name or ""
-        tg_user.is_active = True
-        tg_user.connect_token = uuid.uuid4()  # Invalidate used token
-        tg_user.save(update_fields=["telegram_id", "username", "first_name", "is_active", "connect_token"])
+            tg_user.telegram_id = telegram_id
+            tg_user.username = username or ""
+            tg_user.first_name = first_name or ""
+            tg_user.is_active = True
+            tg_user.connect_token = uuid.uuid4()  # Invalidate used token
+            tg_user.save(update_fields=["telegram_id", "username", "first_name", "is_active", "connect_token"])
 
-        logger.info(
-            "link_account: linked user %s → telegram_id=%s",
-            tg_user.user.email,
-            telegram_id,
-        )
-        return tg_user
+            logger.info(
+                "link_account: linked user %s → telegram_id=%s",
+                tg_user.user.email,
+                telegram_id,
+            )
+            return tg_user
+        return None
 
     # ------------------------------------------------------------------
     # Messaging helpers
     # ------------------------------------------------------------------
 
     @staticmethod
-    def send_message(telegram_id: int, text: str, parse_mode: str = "HTML") -> bool:
+    def send_message(
+        telegram_id: int,
+        text: str,
+        parse_mode: str = "HTML",
+        reply_markup: dict | None = None,
+    ) -> bool:
         """
         Synchronous fire-and-forget send, safe to call from Celery tasks.
         Returns True on success, False on failure.
@@ -107,17 +136,24 @@ class TelegramService:
             logger.debug("send_message: TELEGRAM_BOT_TOKEN not configured, skipping.")
             return False
 
+        payload: dict = {
+            "chat_id": telegram_id,
+            "text": text,
+            "parse_mode": parse_mode,
+        }
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
+
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         try:
-            resp = httpx.post(
-                url,
-                json={"chat_id": telegram_id, "text": text, "parse_mode": parse_mode},
-                timeout=10,
-            )
+            resp = httpx.post(url, json=payload, timeout=10)
             resp.raise_for_status()
             return True
         except Exception as exc:  # noqa: BLE001
-            logger.error("send_message to %s failed: %s", telegram_id, exc)
+            detail = ""
+            if hasattr(exc, "response") and exc.response is not None:
+                detail = f" — {exc.response.text[:300]}"
+            logger.error("send_message to %s failed: %s%s", telegram_id, exc, detail)
             return False
 
     @staticmethod

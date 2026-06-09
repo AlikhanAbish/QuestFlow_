@@ -8,72 +8,68 @@
 <div class="space-y-6">
 
     {# ── Page header ── #}
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-2xl font-bold text-white">Your Notifications</h2>
-            <p class="text-sm text-zinc-400 mt-1">
-                {% if unread_count %}
-                    <span class="text-indigo-400 font-medium">{{ unread_count }} unread</span>
-                {% else %}
-                    All caught up 🎉
-                {% endif %}
-            </p>
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="min-w-0">
+            <h2 class="text-2xl font-bold text-white">
+                {% if is_manager_or_admin %}Notifications{% else %}Your Notifications{% endif %}
+            </h2>
+            <div id="notif-header-meta">
+                {% include "notifications/partials/_header_meta.html" %}
+            </div>
         </div>
 
-        {% if unread_count %}
-        <form method="post"
-              action="{% url 'notifications:mark-all-read' %}"
-              hx-post="{% url 'notifications:mark-all-read' %}"
-              hx-target="#notification-bell-wrapper"
-              hx-swap="innerHTML"
-              hx-on::after-request="document.getElementById('notif-list').innerHTML = '<div class=\'py-16 text-center text-zinc-400\'>All notifications marked as read.</div>'">
-            {% csrf_token %}
-            <button type="submit"
-                    id="mark-all-read-btn"
-                    class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                Mark all as read
-            </button>
-        </form>
-        {% endif %}
+        <div id="mark-all-read-container" class="flex-shrink-0">
+            {% if unread_count %}
+            <form method="post"
+                  action="{% url 'notifications:mark-all-read' %}"
+                  hx-post="{% url 'notifications:mark-all-read' %}?filter={{ active_filter }}&scope={{ active_scope }}"
+                  hx-target="#notif-list"
+                  hx-swap="innerHTML">
+                {% csrf_token %}
+                <button type="submit"
+                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 border border-indigo-500/20 text-sm font-medium transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Mark all as read
+                </button>
+            </form>
+            {% endif %}
+        </div>
     </div>
 
-    {# ── Filter tabs ── #}
-    <div class="flex gap-2 flex-wrap" id="notif-filter-tabs">
-        <button class="px-4 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-sm font-medium">
-            All
-        </button>
-        <button class="px-4 py-1.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-transparent text-sm transition-colors">
-            Unread
-        </button>
-        <button class="px-4 py-1.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-transparent text-sm transition-colors">
-            Tasks
-        </button>
-        <button class="px-4 py-1.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-transparent text-sm transition-colors">
-            Gamification
-        </button>
-        <button class="px-4 py-1.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-transparent text-sm transition-colors">
-            Burnout
-        </button>
+    {# ── Role scope tabs (managers/admins) ── #}
+    {% if is_manager_or_admin %}
+    <div id="notif-scope-tabs" class="flex gap-2 flex-wrap">
+        {% include "notifications/partials/_scope_tabs.html" %}
+    </div>
+    {% endif %}
+
+    {# ── Category filter tabs ── #}
+    <div id="notif-filter-tabs" class="flex gap-2 flex-wrap">
+        {% include "notifications/partials/_filter_tabs.html" %}
     </div>
 
     {# ── Notification list card ── #}
     <div class="bg-dark-card border border-white/5 rounded-2xl overflow-hidden shadow-xl shadow-black/30">
 
-        {# Header row #}
-        <div class="px-6 py-4 border-b border-white/5 flex items-center gap-2">
-            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-            <span class="text-sm font-semibold text-white">Activity Feed</span>
+        <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span class="text-sm font-semibold text-white">Activity Feed</span>
+            </div>
+            <div id="notif-feed-hint" class="text-xs text-cyan-400/80 hidden sm:block">
+                {% if active_scope == 'team' %}
+                    Team activity from your reports
+                {% endif %}
+            </div>
         </div>
 
-        {# Notification items — swappable by HTMX pagination #}
         <div id="notif-list" class="divide-y divide-white/5">
-            {% include "notifications/partials/_list_partial.html" %}
+            {% include "notifications/partials/_list_items.html" %}
         </div>
     </div>
 </div>

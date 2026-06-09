@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apk update \
-    && apk add --no-cache gcc musl-dev postgresql-dev libffi-dev \
+    && apk add --no-cache gcc musl-dev postgresql-dev postgresql-client libffi-dev \
     && pip install uv
 
 COPY pyproject.toml /app/

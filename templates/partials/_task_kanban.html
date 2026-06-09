@@ -1,21 +1,17 @@
 <div class="flex h-full items-start space-x-4 min-w-max" x-data="kanbanBoard()">
-    <!-- TO DO Column -->
-    {% with column_title="To Do" column_status="todo" tasks=kanban_columns.todo color_class="bg-gray-100 dark:bg-gray-800" text_class="text-gray-700 dark:text-gray-300" %}
+    {% with column_title="To Do" column_status="todo" tasks=kanban_columns.todo color_class="bg-dark-card/80" text_class="text-zinc-300" badge_class="bg-white/10 text-zinc-300" %}
         {% include "partials/_kanban_column.html" %}
     {% endwith %}
 
-    <!-- IN PROGRESS Column -->
-    {% with column_title="In Progress" column_status="in_progress" tasks=kanban_columns.in_progress color_class="bg-blue-50 dark:bg-blue-900/20" text_class="text-blue-700 dark:text-blue-400" %}
+    {% with column_title="In Progress" column_status="in_progress" tasks=kanban_columns.in_progress color_class="bg-blue-500/5 border-blue-500/20" text_class="text-blue-300" badge_class="bg-blue-500/20 text-blue-300" %}
         {% include "partials/_kanban_column.html" %}
     {% endwith %}
 
-    <!-- DONE Column -->
-    {% with column_title="Done" column_status="done" tasks=kanban_columns.done color_class="bg-green-50 dark:bg-green-900/20" text_class="text-green-700 dark:text-green-400" %}
+    {% with column_title="Done" column_status="done" tasks=kanban_columns.done color_class="bg-green-500/5 border-green-500/20" text_class="text-green-300" badge_class="bg-green-500/20 text-green-300" %}
         {% include "partials/_kanban_column.html" %}
     {% endwith %}
 
-    <!-- OVERDUE Column -->
-    {% with column_title="Overdue" column_status="overdue" tasks=kanban_columns.overdue color_class="bg-red-50 dark:bg-red-900/20" text_class="text-red-700 dark:text-red-400" %}
+    {% with column_title="Overdue" column_status="overdue" tasks=kanban_columns.overdue color_class="bg-red-500/5 border-red-500/20" text_class="text-red-300" badge_class="bg-red-500/20 text-red-300" %}
         {% include "partials/_kanban_column.html" %}
     {% endwith %}
 </div>
@@ -28,7 +24,6 @@
                 if (typeof Sortable !== 'undefined') {
                     this.initSortable();
                 } else {
-                    // Load Sortable if not present
                     const script = document.createElement('script');
                     script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js';
                     script.onload = () => this.initSortable();
@@ -41,19 +36,17 @@
                     new Sortable(el, {
                         group: 'kanban',
                         animation: 150,
-                        ghostClass: 'bg-indigo-50',
+                        ghostClass: 'opacity-50',
                         onEnd: function (evt) {
                             const itemEl = evt.item;
                             const taskId = itemEl.dataset.taskId;
                             const newStatus = evt.to.dataset.status;
                             const oldStatus = evt.from.dataset.status;
-                            
+
                             if (newStatus !== oldStatus) {
-                                // Trigger HTMX request manually or via fetch
                                 const formData = new FormData();
                                 formData.append('status', newStatus);
-                                
-                                // Fetch CSRF Token
+
                                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 
                                 fetch(`/tasks/${taskId}/status/`, {
@@ -64,8 +57,7 @@
                                         'HX-Request': 'true'
                                     }
                                 }).then(response => {
-                                    if(response.ok) {
-                                        // The hx-trigger in view will cause the board to refresh
+                                    if (response.ok) {
                                         document.body.dispatchEvent(new Event('taskStatusUpdated'));
                                     }
                                 });

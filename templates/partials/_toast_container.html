@@ -1,0 +1,142 @@
+{# Global toast stack — fixed top-right, above all UI layers #}
+<div id="toast-container"
+     x-data
+     class="fixed top-4 right-4 z-[9999] isolate flex flex-col gap-3 pointer-events-none w-[calc(100%-2rem)] max-w-sm sm:max-w-md"
+     aria-live="polite"
+     aria-atomic="false">
+
+    {# Django messages on full page load #}
+    {% if messages %}
+    {% for message in messages %}
+    {% include "partials/_toast.html" with message=message %}
+    {% endfor %}
+    {% endif %}
+
+    {# Dynamic toasts via Alpine store (HX-Trigger / window.showToast) #}
+    <template x-for="toast in $store.toast.items" :key="toast.id">
+        <div x-show="toast.show"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-x-6 scale-95"
+             x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-x-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-x-6 scale-95"
+             class="pointer-events-auto w-full glass-dark rounded-xl shadow-2xl shadow-black/60 overflow-hidden border border-white/10 border-l-4 ring-1"
+             :class="{
+                 'border-l-emerald-500 ring-emerald-500/20': toast.type === 'success',
+                 'border-l-red-500 ring-red-500/20': toast.type === 'error' || toast.type === 'danger',
+                 'border-l-amber-500 ring-amber-500/20': toast.type === 'warning',
+                 'border-l-primary-500 ring-primary-500/20': toast.type === 'info'
+             }"
+             role="alert">
+            <div class="p-4 flex items-start gap-3">
+                <div class="flex-shrink-0 mt-0.5"
+                     :class="{
+                         'text-emerald-400': toast.type === 'success',
+                         'text-red-400': toast.type === 'error' || toast.type === 'danger',
+                         'text-amber-400': toast.type === 'warning',
+                         'text-primary-400': toast.type === 'info'
+                     }">
+                    <template x-if="toast.type === 'error' || toast.type === 'danger'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="toast.type === 'warning'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="toast.type === 'info'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="toast.type === 'success' || !['error', 'danger', 'warning', 'info'].includes(toast.type)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                </div>
+
+                <p class="flex-1 text-sm font-medium text-white/90 leading-relaxed min-w-0" x-text="toast.message"></p>
+
+                <button type="button"
+                        @click="$store.toast.dismiss(toast.id)"
+                        class="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                        aria-label="Dismiss notification">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('toast', {
+            items: [],
+            show(message, type = 'info', duration = 5000) {
+                const id = (window.crypto && crypto.randomUUID)
+                    ? crypto.randomUUID()
+                    : `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                const item = { id, message, type, show: true };
+                this.items.push(item);
+                if (duration > 0) {
+                    setTimeout(() => this.dismiss(id), duration);
+                }
+                return id;
+            },
+            dismiss(id) {
+                const item = this.items.find((t) => t.id === id);
+                if (!item || !item.show) return;
+                item.show = false;
+                setTimeout(() => {
+                    this.items = this.items.filter((t) => t.id !== id);
+                }, 250);
+            },
+        });
+    });
+
+    window.showToast = (message, type = 'info', duration = 5000) => {
+        if (window.Alpine && Alpine.store('toast')) {
+            return Alpine.store('toast').show(message, type, duration);
+        }
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('toast').show(message, type, duration);
+        }, { once: true });
+    };
+
+    document.body.addEventListener('showToast', (event) => {
+        const detail = event.detail;
+        if (!detail) return;
+        const payload = typeof detail === 'string' ? { message: detail } : detail;
+        if (payload.message) {
+            window.showToast(payload.message, payload.type || 'info', payload.duration);
+        }
+    });
+
+    document.body.addEventListener('htmx:afterRequest', (event) => {
+        const xhr = event.detail?.xhr;
+        if (!xhr) return;
+        const trigger = xhr.getResponseHeader('HX-Trigger');
+        if (!trigger) return;
+        try {
+            const data = JSON.parse(trigger);
+            if (data.showToast) {
+                const payload = typeof data.showToast === 'string'
+                    ? { message: data.showToast }
+                    : data.showToast;
+                window.showToast(payload.message, payload.type || 'info', payload.duration);
+            }
+        } catch (_) {
+            /* non-JSON HX-Trigger — ignore */
+        }
+    });
+</script>

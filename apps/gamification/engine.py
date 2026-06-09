@@ -137,40 +137,34 @@ class GamificationEngine:
                 total_xp=level_data.total_xp
             )
 
-            # TZ 2.1.3 / 2.2.4: notify manager at milestone levels 10,20,30,40,50
             MILESTONE_LEVELS = {10, 20, 30, 40, 50}
+            try:
+                from apps.notifications.services import NotificationService
+
+                NotificationService.notify_level_up(self.user, new_level)
+                if new_level in MILESTONE_LEVELS:
+                    NotificationService.notify_employee_milestone(self.user, new_level)
+            except Exception:
+                pass
+
             if new_level in MILESTONE_LEVELS:
-                self._notify_manager_milestone(new_level)
+                self._notify_telegram_milestone(new_level)
+
+            # TZ 6.6: Send Telegram notification
+            self._notify_telegram_level_up(new_level)
 
         return leveled_up
 
-    def _notify_manager_milestone(self, milestone_level: int) -> None:
-        """
-        TZ 2.2.4: When an employee reaches a milestone level (10/20/30/40/50),
-        send an in-app notification to the user's team manager.
-        """
-        try:
-            from apps.notifications.models import Notification, NotificationType
-            manager = getattr(self.user, 'team', None)
-            if manager:
-                manager = getattr(self.user.team, 'manager', None)
-            if not manager:
-                return
+    def _notify_telegram_milestone(self, milestone_level: int) -> None:
+        """TZ 6.6: Telegram alert to managers/admins on employee milestone."""
+        from apps.accounts.models import Role
 
-            employee_name = self.user.get_full_name() or self.user.email
-            Notification.objects.create(
-                recipient=manager,
-                type=NotificationType.ACHIEVEMENT,
-                title=f"🏆 {employee_name} reached Level {milestone_level}!",
-                body=(
-                    f"{employee_name} has reached Level {milestone_level} — a milestone achievement! "
-                    f"Consider granting them a real-world reward in QuestFlow."
-                ),
-                action_url=f"/gamification/profile/{self.user.pk}/",
-                metadata={"milestone_level": milestone_level, "employee_id": self.user.pk},
-            )
+        if self.user.role != Role.EMPLOYEE:
+            return
+        try:
+            from apps.telegram_bot.tasks import send_milestone_notification
+            send_milestone_notification.delay(self.user.id, milestone_level)
         except Exception:
-            # Notification is non-critical — never let it break XP flow
             pass
 
     @transaction.atomic
@@ -190,6 +184,9 @@ class GamificationEngine:
             if self._evaluate_badge_trigger(badge):
                 ub = UserBadge.objects.create(user=self.user, badge=badge)
                 awarded_badges.append(ub)
+                
+                # TZ 6.6: Send Telegram notification for each badge
+                self._notify_telegram_badge(badge.id)
                 
         return awarded_badges
         
@@ -212,3 +209,31 @@ class GamificationEngine:
                 
         # Add more trigger logic here as needed
         return False
+
+    def _notify_telegram_level_up(self, new_level: int) -> None:
+        """
+        TZ 6.6: Send Telegram notification when an employee levels up.
+        Managers/admins do not receive personal level-up messages.
+        """
+        from apps.accounts.models import Role
+
+        if self.user.role != Role.EMPLOYEE:
+            return
+        try:
+            from apps.telegram_bot.tasks import send_level_up_notification
+            send_level_up_notification.delay(self.user.id, new_level)
+        except Exception:
+            # Telegram notification is non-critical
+            pass
+
+    def _notify_telegram_badge(self, badge_id: int) -> None:
+        """
+        TZ 6.6: Send Telegram notification when user earns a badge.
+        Non-blocking — never breaks the main flow if Telegram is unavailable.
+        """
+        try:
+            from apps.telegram_bot.tasks import send_badge_notification
+            send_badge_notification.delay(self.user.id, badge_id)
+        except Exception:
+            # Telegram notification is non-critical
+            pass

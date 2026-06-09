@@ -1,0 +1,36 @@
+{% load humanize %}
+
+{% for notif in notifications %}
+{% include "notifications/partials/_notification_item.html" with notif=notif notif_context=notif_context|default:"list" %}
+{% empty %}
+<div class="py-16 px-6 text-center">
+    <div class="text-5xl mb-3">🔔</div>
+    <p class="text-zinc-400 text-sm">No notifications match this filter.</p>
+</div>
+{% endfor %}
+
+{% if is_paginated %}
+<div class="flex justify-center gap-2 py-6 border-t border-white/5">
+    {% if page_obj.has_previous %}
+    <a href="?filter={{ active_filter }}&scope={{ active_scope }}&page={{ page_obj.previous_page_number }}"
+       hx-get="?filter={{ active_filter }}&scope={{ active_scope }}&page={{ page_obj.previous_page_number }}"
+       hx-target="#notif-list"
+       hx-swap="innerHTML"
+       class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-zinc-300 transition-colors">
+        ← Previous
+    </a>
+    {% endif %}
+    <span class="px-4 py-2 text-sm text-zinc-500">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+    <a href="?filter={{ active_filter }}&scope={{ active_scope }}&page={{ page_obj.next_page_number }}"
+       hx-get="?filter={{ active_filter }}&scope={{ active_scope }}&page={{ page_obj.next_page_number }}"
+       hx-target="#notif-list"
+       hx-swap="innerHTML"
+       class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-zinc-300 transition-colors">
+        Next →
+    </a>
+    {% endif %}
+</div>
+{% endif %}

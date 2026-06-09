@@ -1,0 +1,16 @@
+{% if unread_count %}
+<p class="text-sm text-zinc-400 mt-1">
+    <span class="text-indigo-400 font-medium">{{ unread_count }} unread</span>
+    {% if is_manager_or_admin and team_unread %}
+        <span class="text-zinc-500"> · {{ team_unread }} team</span>
+    {% endif %}
+</p>
+{% else %}
+<p class="text-sm text-emerald-400/90 mt-1.5 flex items-center gap-1.5">
+    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span>All caught up!</span>
+    <span aria-hidden="true">🎉</span>
+</p>
+{% endif %}

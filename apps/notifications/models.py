@@ -3,6 +3,11 @@ from django.conf import settings
 from apps.core.models import TimeStampedModel
 
 
+class NotificationScope(models.TextChoices):
+    PERSONAL = 'personal', 'Personal'
+    TEAM     = 'team',     'Team'
+
+
 class NotificationType(models.TextChoices):
     TASK_ASSIGNED   = 'task_assigned',   'Task Assigned'
     TASK_COMPLETED  = 'task_completed',  'Task Completed'
@@ -18,6 +23,37 @@ class NotificationType(models.TextChoices):
     REWARD          = 'reward',          'Reward'
     STREAK_UPDATE   = 'streak_update',   'Streak Update'
     SYSTEM          = 'system',          'System'
+
+
+# Types that represent manager/admin team alerts (about other employees).
+TEAM_SCOPED_TYPES = frozenset({
+    NotificationType.TASK_COMPLETED,
+    NotificationType.ACHIEVEMENT,
+    NotificationType.BURNOUT_CHANGE,
+    NotificationType.NEW_TASK,
+})
+
+FILTER_TASK_TYPES = frozenset({
+    NotificationType.TASK_ASSIGNED,
+    NotificationType.TASK_COMPLETED,
+    NotificationType.TASK_OVERDUE,
+    NotificationType.NEW_TASK,
+})
+
+FILTER_GAMIFICATION_TYPES = frozenset({
+    NotificationType.LEVEL_UP,
+    NotificationType.BADGE_EARNED,
+    NotificationType.MILESTONE_REWARD,
+    NotificationType.ACHIEVEMENT,
+    NotificationType.REWARD,
+    NotificationType.STREAK_UPDATE,
+})
+
+FILTER_BURNOUT_TYPES = frozenset({
+    NotificationType.BURNOUT_ALERT,
+    NotificationType.BURNOUT_CHANGE,
+    NotificationType.ASSESSMENT_DUE,
+})
 
 
 # Icon map — used in templates to display per-type icons
@@ -92,6 +128,19 @@ class Notification(TimeStampedModel):
         if not self.is_read:
             self.is_read = True
             self.save(update_fields=['is_read'])
+
+    @property
+    def scope(self) -> str:
+        stored = self.metadata.get('scope')
+        if stored in (NotificationScope.PERSONAL, NotificationScope.TEAM):
+            return stored
+        if self.type in TEAM_SCOPED_TYPES and self.metadata.get('employee_id'):
+            return NotificationScope.TEAM
+        return NotificationScope.PERSONAL
+
+    @property
+    def is_team(self) -> bool:
+        return self.scope == NotificationScope.TEAM
 
     @property
     def icon(self) -> str:

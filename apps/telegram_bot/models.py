@@ -25,7 +25,13 @@ class TelegramUser(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="telegram",
     )
-    telegram_id = models.BigIntegerField(unique=True, db_index=True)
+    telegram_id = models.BigIntegerField(
+        unique=True,
+        db_index=True,
+        null=True,
+        blank=True,
+        help_text="Null until the user completes /start linking in Telegram.",
+    )
     username = models.CharField(max_length=100, blank=True)
     first_name = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(
@@ -44,5 +50,8 @@ class TelegramUser(TimeStampedModel):
         verbose_name_plural = "Telegram Users"
 
     def __str__(self) -> str:
-        handle = f"@{self.username}" if self.username else str(self.telegram_id)
+        if self.telegram_id:
+            handle = f"@{self.username}" if self.username else str(self.telegram_id)
+        else:
+            handle = "unlinked"
         return f"{self.user.email} → {handle}"

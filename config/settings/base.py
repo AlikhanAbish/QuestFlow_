@@ -20,8 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_extensions',
-    
+    'django.contrib.humanize',
 
     # Third-party apps
     'django_htmx',
@@ -53,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+    'apps.core.middleware.HtmxToastMiddleware',
     'axes.middleware.AxesMiddleware',
 ]
 
@@ -140,6 +140,8 @@ CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_TASK_CREATE_MISSING_QUEUES = True
+# Telegram bot tasks use queue="telegram"; worker must include: -Q celery,telegram
 
 CACHES = {
     'default': {
@@ -154,6 +156,11 @@ AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+import sys
+if 'test' in sys.argv:
+    AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
+    AXES_ENABLED = False
 
 # ---------------------------------------------------------------------------
 # Celery Beat Schedule  (TZ 6.6)

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="antialiased">
+<html lang="en" class="dark antialiased">
 
 <head>
     <meta charset="UTF-8">
@@ -57,49 +57,6 @@
 </head>
 
 <body class="bg-dark-bg text-gray-100 min-h-screen font-sans selection:bg-primary-500/30">
-
-    <!-- Global Messages Toast -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2">
-        {% if messages %}
-        {% for message in messages %}
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
-            x-transition:enter="transition ease-out duration-300 transform"
-            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 sm:scale-100"
-            x-transition:leave-end="opacity-0 sm:scale-95"
-            class="max-w-xs bg-dark-card border border-white/10 rounded-xl shadow-lg shadow-black/50 overflow-hidden"
-            role="alert">
-            <div class="p-4 flex items-center gap-4">
-                {% if message.tags == 'error' %}
-                <div class="text-red-400">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                {% else %}
-                <div class="text-green-400">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                {% endif %}
-                <div class="text-sm font-medium text-white">
-                    {{ message }}
-                </div>
-                <button @click="show = false" class="ml-auto text-gray-400 hover:text-white transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        {% endfor %}
-        {% endif %}
-    </div>
 
     <!-- Layout -->
     {% if user.is_authenticated %}
@@ -213,7 +170,7 @@
 
             <!-- Top Header -->
             <header
-                class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-dark-card/50 backdrop-blur-xl z-10">
+                class="relative h-16 border-b border-white/5 flex items-center justify-between px-8 bg-dark-card/50 backdrop-blur-xl z-30">
                 <h1 class="text-xl font-semibold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
                 <div class="flex items-center gap-4">
                     <!-- Live Notifications Bell -->
@@ -221,7 +178,7 @@
                 </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto p-8 z-10" id="main-content">
+            <div class="flex-1 overflow-y-auto p-8 relative z-0" id="main-content">
                 <div class="max-w-7xl mx-auto w-full {% block auth_container_class %}{% endblock %}">
                     {% else %}
                     <!-- Guest / Auth Layout -->
@@ -280,6 +237,8 @@
             }
         }
     </style>
+
+    {% include "partials/_toast_container.html" %}
 
     <!-- CSRF for all HTMX requests -->
     <script>

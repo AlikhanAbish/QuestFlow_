@@ -1,0 +1,26 @@
+{# Primary Telegram deep-link CTA — visible for all roles in linked and not-linked states #}
+<div class="flex flex-wrap items-center gap-2">
+  <a
+    href="{{ deep_link }}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#229ED9] hover:bg-[#1a8bbf] text-white text-sm font-semibold transition-colors shadow-md shadow-[#229ED9]/20"
+  >
+    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.526l-2.94-.916c-.64-.203-.652-.64.135-.949l11.433-4.408c.532-.194.998.131.818.968z"/>
+    </svg>
+    {% if already_linked %}
+      Open in Telegram
+    {% else %}
+      Connect Telegram
+    {% endif %}
+  </a>
+  <a
+    href="{{ deep_link }}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#229ED9]/40 text-[#229ED9] hover:bg-[#229ED9]/10 text-sm font-semibold transition-colors"
+  >
+    Start Bot
+  </a>
+</div>

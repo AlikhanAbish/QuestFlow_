@@ -1,39 +1,24 @@
-{# Step-by-step instructions + deep-link button #}
+{# Step-by-step instructions (re-link details); primary CTA is in _connect_button.html #}
 <div class="mt-3 space-y-3">
 
-  {# Steps #}
   <ol class="text-xs text-zinc-400 space-y-1.5 list-none">
     <li class="flex items-start gap-2">
       <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold flex items-center justify-center">1</span>
-      <span>Click the button below to open the QuestFlow bot in Telegram</span>
+      <span>Click <strong class="text-zinc-300">Connect Telegram</strong> or <strong class="text-zinc-300">Start Bot</strong> above</span>
     </li>
     <li class="flex items-start gap-2">
       <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold flex items-center justify-center">2</span>
-      <span>Press <strong class="text-zinc-300">START</strong> in the Telegram chat</span>
+      <span>Press <strong class="text-zinc-300">START</strong> in the Telegram chat (link opens automatically)</span>
     </li>
     <li class="flex items-start gap-2">
       <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold flex items-center justify-center">3</span>
-      <span>Your account will be linked automatically ✅</span>
+      <span>Your QuestFlow account will be linked ✅</span>
     </li>
   </ol>
 
-  {# Deep-link button #}
-  <a
-    href="{{ deep_link }}"
-    target="_blank"
-    rel="noopener noreferrer"
-    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#229ED9] hover:bg-[#1a8bbf] text-white text-sm font-semibold transition-colors shadow-md shadow-[#229ED9]/20"
-  >
-    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.526l-2.94-.916c-.64-.203-.652-.64.135-.949l11.433-4.408c.532-.194.998.131.818.968z"/>
-    </svg>
-    Open in Telegram
-  </a>
-
-  {# Manual fallback #}
   <p class="text-[11px] text-zinc-600">
-    Or send <code class="bg-zinc-800 px-1 rounded text-zinc-300">/start {{ connect_token }}</code> to
-    <a href="https://t.me/{{ bot_username }}" target="_blank" class="text-blue-400 hover:underline">@{{ bot_username }}</a>
+    Or send <code class="bg-zinc-800 px-1 rounded text-zinc-300">/start {{ connect_param }}</code> to
+    <a href="https://t.me/{{ bot_username }}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">@{{ bot_username }}</a>
   </p>
 
 </div>

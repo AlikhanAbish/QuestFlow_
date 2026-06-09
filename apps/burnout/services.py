@@ -63,15 +63,20 @@ class BurnoutService:
         )
         
         burnout_level = self.calculator.calculate(assessment)
-        
+
         # Track old score for alerts
-        old_level = 'green' # Default
+        old_level = 'green'  # Default
         try:
             old_score_obj = BurnoutScore.objects.get(user=self.user)
             old_level = old_score_obj.score
         except BurnoutScore.DoesNotExist:
             pass
-        
+
+        team = getattr(self.user, 'team', None)
+        old_team_summary = None
+        if team:
+            old_team_summary = self.get_team_summary(team)
+
         score, _ = BurnoutScore.objects.update_or_create(
             user=self.user,
             defaults={
@@ -89,9 +94,33 @@ class BurnoutService:
             
         # Trigger Telegram alert if status changed
         if old_level != burnout_level:
-            from apps.telegram_bot.tasks import send_burnout_alerts
+            from apps.telegram_bot.tasks import (
+                send_burnout_alerts,
+                send_team_burnout_notification,
+            )
             send_burnout_alerts.delay(self.user.id, old_level, burnout_level)
-            
+
+            if team:
+                new_team_summary = self.get_team_summary(team)
+                if old_team_summary != new_team_summary:
+                    try:
+                        from apps.notifications.services import NotificationService
+                        NotificationService.notify_team_burnout_change(
+                            team,
+                            self.user,
+                            old_level,
+                            burnout_level,
+                            new_team_summary,
+                        )
+                    except Exception:
+                        pass
+                    send_team_burnout_notification.delay(
+                        team.id,
+                        self.user.id,
+                        old_level,
+                        burnout_level,
+                    )
+
         return score
 
     def set_manager_consent(self, consent: bool):
