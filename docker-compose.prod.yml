@@ -63,6 +63,18 @@ services:
       - django
       - redis
 
+  telegram-bot-setup:
+    build: 
+      context: .
+      dockerfile: docker/telegram/Dockerfile
+    env_file: .env
+    command: >
+      sh -c '/app/scripts/wait_for_db.sh && python manage.py telegram_setup_webhook'
+    depends_on:
+      - django
+      - redis
+    restart: "no"
+
   nginx:
     build: ./docker/nginx
     ports:
