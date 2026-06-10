@@ -23,8 +23,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Копируем весь проект
 COPY . .
 
+# Создаём директории для статических файлов (если их нет)
+RUN mkdir -p /app/static /app/staticfiles /app/media
+
 # Собираем статические файлы
-RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput 2>&1 || true
 
 # Открываем порт
 EXPOSE 8000

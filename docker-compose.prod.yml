@@ -49,8 +49,10 @@ services:
     command: >
       sh -c '/app/scripts/wait_for_db.sh && celery -A config worker -l info -Q celery,telegram'
     depends_on:
-      - django
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   celery-beat:
     build: 
@@ -60,8 +62,10 @@ services:
     command: >
       sh -c '/app/scripts/wait_for_db.sh && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler'
     depends_on:
-      - django
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   telegram-bot-setup:
     build: 
@@ -71,8 +75,10 @@ services:
     command: >
       sh -c '/app/scripts/wait_for_db.sh && python manage.py telegram_setup_webhook'
     depends_on:
-      - django
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     restart: "no"
 
   nginx:
