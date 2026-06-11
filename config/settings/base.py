@@ -127,7 +127,7 @@ AUTH_USER_MODEL = 'accounts.User'
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
 
 # Brevo API key for sending emails via HTTP (more reliable than SMTP on Railway)
-BREVO_API_KEY = os.getenv('BREVO_API_KEY', '')
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 
 # Verified sender in Brevo (Senders & IP) — the "From" email address
 # NOT the SMTP login *@smtp-brevo.com
