@@ -131,7 +131,7 @@ BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 
 # Verified sender in Brevo (Senders & IP) — the "From" email address
 # NOT the SMTP login *@smtp-brevo.com
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "invite@questflow.online")
 
 # Email backend — for development/testing only
 # BrevoEmailService detects console backend mode and uses it instead of Brevo API.
