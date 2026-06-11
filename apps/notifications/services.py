@@ -145,7 +145,8 @@ class BrevoEmailService:
         Send email via Brevo HTTP API.
         """
         payload = {
-            "sender": {"email": from_email},
+            # Явно передаем и имя, и email, как просит верификация Brevo
+            "sender": {"name": "QuestFlow", "email": "alikhanabishevwv@gmail.com"}, 
             "to": [{"email": to_email}],
             "subject": subject,
             "htmlContent": body_html,
