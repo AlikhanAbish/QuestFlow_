@@ -133,89 +133,37 @@ class BrevoEmailService:
             from_email=from_email,
         )
     
-    def _send_via_api(
-        self,
-        *,
-        subject: str,
-        body_html: str,
-        to_email: str,
-        from_email: str,
-    ) -> bool:
-        """
-        Send email via Brevo HTTP API.
-        """
-        payload = {
-            # Явно передаем и имя, и email, как просит верификация Brevo
-            "sender": {"name": "QuestFlow", "email": "invite@questflow.online"}, 
-            "to": [{"email": to_email}],
-            "subject": subject,
-            "htmlContent": body_html,
-        }
-        
-        headers = {
-            "api-key": self.api_key,
-            "Content-Type": "application/json",
-        }
-        
-        try:
-            logger.debug(
-                "Brevo API: sending email to=%s from=%s subject=%r",
-                to_email, from_email, subject,
-            )
-
-            # ВРЕМЕННЫЙ ДЕБАГ ПЕРЕМЕННЫХ
-            masked_key = f"{self.api_key[:6]}...{self.api_key[-4:]}" if self.api_key else "EMPTY/NONE"
-            
-            # ДЕЛАЕМ ТОЛЬКО ОДИН ЗАПРОС И ИСПОЛЬЗУЕМ self.BREVO_API_URL
-            # Явно пишем строку URL, чтобы исключить любые старые константы
-            response = requests.post(
-                "https://api.brevo.com/v3/smtp/emails",
-                json=payload,
-                headers=headers,
-                timeout=self.REQUEST_TIMEOUT,
-            )
-
     
-            # Handle API errors
-            if response.status_code == 401:
-                logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY")
-                raise BrevoEmailError(
-                    _("Email service authentication failed. Check BREVO_API_KEY setting.")
-                )
-            
-            if response.status_code == 429:
-                logger.warning("Brevo API: Rate limit exceeded (429). Retry after delay.")
-                raise BrevoEmailError(
-                    _("Email service is busy. Please try again in a moment.")
-                )
-            
-            if response.status_code >= 400:
-                error_detail = ""
-                try:
-                    error_json = response.json()
-                    # Brevo возвращает подробности ошибки в формате {"code": "...", "message": "..."}
-                    error_detail = f"Code: {error_json.get('code')}, Message: {error_json.get('message')}"
-                except Exception:
-                    error_detail = response.text[:150]
-                
-                # ТЕПЕРЬ ТЫ ТОЧНО УВИДИШЬ ДЕТАЛИ В ЛОГАХ RAILWAY:
-                if response.status_code not in [200, 201, 202]:
-                    logger.error(
-                        "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
-                        response.status_code,
-                        response.text  # Выведет реальный текст ошибки вместо пустых None
-                    )
-                raise BrevoEmailError(
-                    _("Email service error. Please try again or contact support.")
-                )
-            
-            # Success: 201 Created or 200 OK
-            logger.info(
-                "Email delivered via Brevo: status=%d to=%s from=%s",
-                response.status_code, to_email, from_email,
-            )
+    def _send_via_api(self, to_email, subject, html_content):
+        import sib_api_v3_sdk
+        from sib_api_v3_sdk.rest import ApiException
+
+        # 1. Настройка конфигурации авторизации
+        configuration = sib_api_v3_sdk.Configuration()
+        # Очищаем ключ от любых фантомных символов переноса строки
+        configuration.api_key['api-key'] = str(self.api_key).strip().replace("\n", "").replace("\r", "")
+
+        # 2. Инициализация официального клиента API
+        api_client = sib_api_v3_sdk.ApiClient(configuration)
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(api_client)
+
+        # 3. Сборка объекта письма строго по спецификации SDK
+        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+            sender={"name": "QuestFlow", "email": "invite@questflow.online"},
+            to=[{"email": to_email}],
+            subject=subject,
+            html_content=html_content
+        )
+
+        try:
+            # Отправка через встроенный метод библиотеки
+            api_response = api_instance.send_transac_email(send_smtp_email)
+            logger.info("!!! BREVO SDK SUCCESS: %s", api_response)
             return True
-            
+        except ApiException as e:
+            # Если Brevo вернет ошибку, SDK выведет её структурированно
+            logger.error("!!! КРИТИЧЕСКАЯ ОШИБКА BREVO SDK: Status=%s | Body=%s", e.status, e.body)
+            raise BrevoEmailError(f"Email service error via SDK: {e.body}")        
         except BrevoEmailError:
             # Пробрасываем наши кастомные ошибки выше без изменений
             raise
