@@ -6,22 +6,21 @@ class TelegramBotConfig(AppConfig):
     name = 'apps.telegram_bot'
 
     def ready(self):
-        # Защита: не регистрируем вебхук во время миграций, сбора статики или тестов
+        # Защита от выполнения при миграциях и сборе статики
         if any(cmd in sys.argv for cmd in ['makemigrations', 'migrate', 'collectstatic', 'test']):
             return
 
-        # Импортируем внутри метода, чтобы избежать циклической зависимости
-        from apps.telegram_bot.services import TelegramService
+        # ИМПОРТИРУЕМ НАПРЯМУЮ ИЗ bot.py
+        from apps.telegram_bot.bot import setup_webhook
         import logging
         logger = logging.getLogger(__name__)
 
         try:
-            # Вызываем метод установки вебхука
-            # Убедись, что такой метод или аналогичный есть в твоем TelegramService
-            success = TelegramService.setup_webhook() 
+            # Вызываем правильную функцию
+            success = setup_webhook() 
             if success:
-                logger.info("🤖 [TELEGRAM] Вебхук успешно зарегистрирован в Telegram API.")
+                logger.error("🤖 [TELEGRAM] Вебхук успешно зарегистрирован через bot.setup_webhook().")
             else:
-                logger.error("🤖 [TELEGRAM] Не удалось зарегистрировать вебхук.")
+                logger.error("🤖 [TELEGRAM] Не удалось зарегистрировать вебхук через Телеграм API.")
         except Exception as e:
-            logger.error(f"🤖 [TELEGRAM] Ошибка при автоматической установке вебхука: {e}")
+            logger.error(f"🤖 [TELEGRAM] Критическая ошибка инициализации вебхука: {e}")
