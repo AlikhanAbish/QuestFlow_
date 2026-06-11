@@ -175,12 +175,7 @@ class BrevoEmailService:
                 timeout=self.REQUEST_TIMEOUT,
             )
 
-            if response.status_code not in [200, 201, 202]:
-                logger.error(
-                    "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
-                    response.status_code,
-                    response.text  # Выведет реальный текст ошибки вместо пустых None
-                )
+    
             # Handle API errors
             if response.status_code == 401:
                 logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY")
@@ -204,9 +199,11 @@ class BrevoEmailService:
                     error_detail = response.text[:150]
                 
                 # ТЕПЕРЬ ТЫ ТОЧНО УВИДИШЬ ДЕТАЛИ В ЛОГАХ RAILWAY:
+                if response.status_code not in [200, 201, 202]:
                 logger.error(
-                    "!!! BREVO RAW ERROR (status=%d): %s | to=%s | payload=%s",
-                    response.status_code, error_detail, to_email, payload
+                    "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
+                    response.status_code,
+                    response.text  # Выведет реальный текст ошибки вместо пустых None
                 )
                 raise BrevoEmailError(
                     _("Email service error. Please try again or contact support.")
