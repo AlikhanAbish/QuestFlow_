@@ -122,21 +122,23 @@ DATABASES = {
 AUTH_USER_MODEL = 'accounts.User'
 
 # ---------------------------------------------------------------------------
-# Email (Brevo SMTP — TZ 7.3)
+# Email (Brevo API v3 — TZ 7.3)
 # ---------------------------------------------------------------------------
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
 
+# Brevo API key for sending emails via HTTP (more reliable than SMTP on Railway)
+BREVO_API_KEY = os.getenv('BREVO_API_KEY', '')
+
+# Verified sender in Brevo (Senders & IP) — the "From" email address
+# NOT the SMTP login *@smtp-brevo.com
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
+
+# Email backend (optional, for development/testing)
+# Leave empty to use Brevo API, or set to 'django.core.mail.backends.console.EmailBackend' for console output
 EMAIL_BACKEND = os.getenv(
     'EMAIL_BACKEND',
-    'django.core.mail.backends.smtp.EmailBackend',
+    'django.core.mail.backends.smtp.EmailBackend',  # Fallback (not used with Brevo API)
 )
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp-relay.brevo.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-# Verified sender in Brevo (Senders & IP) — NOT the SMTP login *@smtp-brevo.com
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 
 # ---------------------------------------------------------------------------
 # Telegram Bot (TZ 6.2 / 7.3)

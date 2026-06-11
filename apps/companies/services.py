@@ -5,13 +5,11 @@ All invitation-related operations go through InvitationService,
 keeping views thin and logic testable in isolation.
 """
 import logging
-import smtplib
 from datetime import timedelta
 from email.utils import parseaddr
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
@@ -19,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import Company, Invitation, Team
 from apps.accounts.models import Role
+from apps.notifications.services import BrevoEmailService, BrevoEmailError
 
 logger = logging.getLogger(__name__)
 
@@ -304,37 +303,20 @@ class InvitationService:
         from_email = self._get_from_email()
 
         try:
-            message = EmailMultiAlternatives(
+            email_service = BrevoEmailService()
+            email_service.send_email(
                 subject=str(subject),
-                body=text_body,
+                body_html=html_body,
+                to_email=invitation.email,
                 from_email=from_email,
-                to=[invitation.email],
             )
-            message.attach_alternative(html_body, "text/html")
-            sent_count = message.send(fail_silently=False)
-            if sent_count < 1:
-                raise InvitationEmailError(
-                    _("Email backend did not send the message.")
-                )
-        except InvitationEmailError:
-            raise
-        except smtplib.SMTPAuthenticationError as exc:
+        except BrevoEmailError as exc:
             logger.exception(
-                "SMTP authentication failed for invitation %s",
-                invitation.pk,
-            )
-            raise InvitationEmailError(
-                _("SMTP authentication failed. Check EMAIL_HOST_USER and EMAIL_HOST_PASSWORD.")
-            ) from exc
-        except smtplib.SMTPException as exc:
-            logger.exception(
-                "SMTP error sending invitation to %s (invitation %s)",
+                "Failed to send invitation email to %s (invitation %s)",
                 invitation.email,
                 invitation.pk,
             )
-            raise InvitationEmailError(
-                _("Could not deliver the invitation email: %(error)s") % {"error": exc}
-            ) from exc
+            raise InvitationEmailError(str(exc)) from exc
         except Exception as exc:
             logger.exception(
                 "Failed to send invitation email to %s (invitation %s)",
@@ -347,7 +329,7 @@ class InvitationService:
 
         _display_name, from_addr = parseaddr(from_email)
         logger.info(
-            "Invitation email accepted by SMTP: to=%s from=%s subject=%r invitation_id=%s",
+            "Invitation email sent: to=%s from=%s subject=%r invitation_id=%s",
             invitation.email,
             from_addr,
             str(subject),

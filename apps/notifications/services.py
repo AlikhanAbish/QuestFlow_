@@ -7,10 +7,13 @@ lives here. Views and signals call this service.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
+import requests
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, QuerySet
+from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import Role
 
@@ -30,6 +33,176 @@ if TYPE_CHECKING:
     User = get_user_model()
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Email Service (Brevo API)
+# ============================================================================
+
+
+class BrevoEmailError(Exception):
+    """Raised when Brevo API email delivery fails."""
+
+
+class BrevoEmailService:
+    """
+    Send emails via Brevo HTTP API instead of SMTP.
+    
+    Brevo API is more reliable than SMTP on Railway (no socket.gaierror).
+    Falls back to console backend in development if EMAIL_BACKEND is configured.
+    
+    Usage:
+        service = BrevoEmailService()
+        service.send_email(
+            subject='Welcome',
+            body_html='<p>Hello</p>',
+            to_email='user@example.com',
+            from_email='noreply@company.com',
+        )
+    """
+    
+    BREVO_API_URL = "https://api.brevo.com/v3/smtp/email/send"
+    REQUEST_TIMEOUT = 10
+    
+    def __init__(self):
+        self.api_key = getattr(settings, 'BREVO_API_KEY', None)
+        # Check if using console backend (development)
+        email_backend = getattr(settings, 'EMAIL_BACKEND', '')
+        self.use_console = 'console' in email_backend.lower()
+        
+        if not self.use_console and not self.api_key:
+            raise BrevoEmailError(
+                _("BREVO_API_KEY is not configured. Set it in .env or Django settings.")
+            )
+    
+    def send_email(
+        self,
+        *,
+        subject: str,
+        body_html: str,
+        to_email: str,
+        from_email: Optional[str] = None,
+    ) -> bool:
+        """
+        Send email via Brevo API (or console backend in development).
+        
+        Args:
+            subject: Email subject line
+            body_html: HTML email body
+            to_email: Recipient email address
+            from_email: Sender email (uses DEFAULT_FROM_EMAIL if None)
+        
+        Returns:
+            True if sent successfully
+        
+        Raises:
+            BrevoEmailError: If sending fails
+        """
+        # Use configured default sender if not provided
+        if not from_email:
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '')
+            if not from_email:
+                raise BrevoEmailError(
+                    _("DEFAULT_FROM_EMAIL is not configured.")
+                )
+        
+        # Development: use console backend
+        if self.use_console:
+            logger.info(
+                "Console backend: email to=%s from=%s subject=%r",
+                to_email, from_email, subject,
+            )
+            return True
+        
+        # Production: send via Brevo API
+        return self._send_via_api(
+            subject=subject,
+            body_html=body_html,
+            to_email=to_email,
+            from_email=from_email,
+        )
+    
+    def _send_via_api(
+        self,
+        *,
+        subject: str,
+        body_html: str,
+        to_email: str,
+        from_email: str,
+    ) -> bool:
+        """Send email via Brevo HTTP API."""
+        payload = {
+            "sender": {"email": from_email},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "htmlContent": body_html,
+        }
+        
+        headers = {
+            "api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
+        
+        try:
+            response = requests.post(
+                self.BREVO_API_URL,
+                json=payload,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
+            
+            # Log the request
+            logger.info(
+                "Brevo API request: to=%s from=%s subject=%r status=%d",
+                to_email, from_email, subject, response.status_code,
+            )
+            
+            # Handle errors
+            if response.status_code == 401:
+                logger.error("Brevo API: invalid API key (401)")
+                raise BrevoEmailError(
+                    _("Email service authentication failed. Check BREVO_API_KEY.")
+                )
+            
+            if response.status_code == 429:
+                logger.warning("Brevo API: rate limit exceeded (429)")
+                raise BrevoEmailError(
+                    _("Email service is busy. Please try again later.")
+                )
+            
+            if response.status_code >= 400:
+                error_msg = response.text[:200]  # Truncate for safety
+                logger.error(
+                    "Brevo API error %d: %s (to=%s)",
+                    response.status_code, error_msg, to_email,
+                )
+                raise BrevoEmailError(
+                    _("Email service error. Please try again.")
+                )
+            
+            logger.info(
+                "Email sent via Brevo: to=%s from=%s subject=%r",
+                to_email, from_email, subject,
+            )
+            return True
+            
+        except requests.exceptions.Timeout:
+            logger.exception("Brevo API timeout (to=%s)", to_email)
+            raise BrevoEmailError(
+                _("Email service request timed out. Please try again.")
+            )
+        
+        except requests.exceptions.RequestException as exc:
+            logger.exception("Brevo API request failed (to=%s)", to_email)
+            raise BrevoEmailError(
+                _("Could not reach email service. Please try again.")
+            ) from exc
+        
+        except Exception as exc:
+            logger.exception("Unexpected error sending email (to=%s)", to_email)
+            raise BrevoEmailError(
+                _("Could not send email. Please try again.")
+            ) from exc
 
 
 class NotificationService:
