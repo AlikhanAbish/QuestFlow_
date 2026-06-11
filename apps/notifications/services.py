@@ -134,7 +134,7 @@ class BrevoEmailService:
         )
     
     
-    def _send_via_api(self, to_email, subject, body_html): # Изменили html_content на body_html
+    def _send_via_api(self, to_email, subject, body_html, **kwargs):
         import sib_api_v3_sdk
         from sib_api_v3_sdk.rest import ApiException
 
@@ -146,15 +146,17 @@ class BrevoEmailService:
         api_client = sib_api_v3_sdk.ApiClient(configuration)
         api_instance = sib_api_v3_sdk.TransactionalEmailsApi(api_client)
 
-        # 3. Сборка объекта письма (передаем body_html в параметр html_content для Brevo)
+        # 3. Сборка объекта письма
+        # Мы жестко используем наш верифицированный домен 'invite@questflow.online'
         send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
             sender={"name": "QuestFlow", "email": "invite@questflow.online"},
             to=[{"email": to_email}],
             subject=subject,
-            html_content=body_html # Вот тут состыковали данные
+            html_content=body_html
         )
 
         try:
+            # Отправка через SDK
             api_response = api_instance.send_transac_email(send_smtp_email)
             logger.info("!!! BREVO SDK SUCCESS: %s", api_response)
             return True
