@@ -162,7 +162,13 @@ class BrevoEmailService:
                 "Brevo API: sending email to=%s from=%s subject=%r",
                 to_email, from_email, subject,
             )
-            
+
+            # ВРЕМЕННЫЙ ДЕБАГ ПЕРЕМЕННЫХ
+            masked_key = f"{self.api_key[:6]}...{self.api_key[-4:]}" if self.api_key else "EMPTY/NONE"
+            logger.error(
+                "!!! ДЕБАГ ЗАПРОСА: URL=%r | API_KEY=%s | Headers=%s",
+                self.BREVO_API_URL, masked_key, headers
+            )
             # ДЕЛАЕМ ТОЛЬКО ОДИН ЗАПРОС И ИСПОЛЬЗУЕМ self.BREVO_API_URL
             # Явно пишем строку URL, чтобы исключить любые старые константы
             response = requests.post(
