@@ -178,6 +178,8 @@ class BrevoEmailService:
                 response.status_code, to_email, from_email, subject,
             )
             
+            response = requests.post(BREVO_API_URL, json=payload, headers=headers)
+
             # Handle API errors
             if response.status_code == 401:
                 logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY in .env")
