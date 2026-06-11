@@ -33,5 +33,7 @@ RUN python manage.py collectstatic --noinput 2>&1 || true
 # Открываем порт
 EXPOSE 8000
 
-# Запуск через entrypoint
-CMD ["sh", "/app/scripts/entrypoint.sh"]
+# Запускаем напрямую Gunicorn, подставляя порт от Railway
+CMD gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+# # Запуск через entrypoint
+# CMD ["sh", "/app/scripts/entrypoint.sh"]
