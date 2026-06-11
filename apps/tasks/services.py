@@ -104,7 +104,8 @@ class TaskService:
             cls._notify_in_app_task_completed(task, changed_by)
 
         # Отправляем сигнал (если где-то используется)
-        task_completed.send(sender=cls, task=task, user=changed_by)
+        # Pass assignee as the user who should receive XP, not the one who changed the status
+        task_completed.send(sender=cls, task=task, user=task.assigned_to or changed_by)
 
         return task
 
