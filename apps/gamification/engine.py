@@ -88,15 +88,17 @@ class GamificationEngine:
         # Исправляем action_type на action
         if not rule:
             rule, created = GamificationRule.objects.get_or_create(
-                action=action,  # ТУТ БЫЛО action_type, СТАЛО action
-                defaults={
-                    "xp_reward": 50,
-                    # Если в модели нет поля name, убираем его, 
-                    # судя по choices поля name там тоже нет, так что оставляем только xp_reward
-                }
+                action=action,
+                defaults={"xp_reward": 50}
             )
-            if hasattr(self, 'rules') and isinstance(self.rules, dict):
-                self.rules[action] = rule
+        
+        # ВРЕМЕННЫЙ КОСТЫЛЬ: если правило нашлось старым (10 XP), принудительно делаем 50
+        if rule.action == 'task_done' and rule.xp_reward == 10:
+            rule.xp_reward = 50
+            rule.save()
+
+        if hasattr(self, 'rules') and isinstance(self.rules, dict):
+            self.rules[action] = rule
 
         if not rule:
             return None, False
