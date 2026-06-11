@@ -71,7 +71,7 @@ class BrevoEmailService:
     """
     
     # Brevo SMTP Email API endpoint (HTTP, not SMTP)
-    BREVO_API_URL = "https://api.brevo.com/v3/smtp/email/send"
+    BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
     REQUEST_TIMEOUT = 10
     
     def __init__(self):
@@ -133,116 +133,37 @@ class BrevoEmailService:
             from_email=from_email,
         )
     
-    def _send_via_api(
-        self,
-        *,
-        subject: str,
-        body_html: str,
-        to_email: str,
-        from_email: str,
-    ) -> bool:
-        """
-        Send email via Brevo HTTP API.
-        
-        Brevo API returns 201 on success, and various error codes for failures.
-        See: https://developers.brevo.com/docs/send-a-transactional-email
-        """
-        payload = {
-            "sender": {"email": from_email},
-            "to": [{"email": to_email}],
-            "subject": subject,
-            "htmlContent": body_html,
-        }
-        
-        headers = {
-            "api-key": self.api_key,
-            "Content-Type": "application/json",
-        }
-        
+    
+    def _send_via_api(self, to_email, subject, body_html, **kwargs):
+        import sib_api_v3_sdk
+        from sib_api_v3_sdk.rest import ApiException
+
+        # 1. Настройка конфигурации авторизации
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key['api-key'] = str(self.api_key).strip().replace("\n", "").replace("\r", "")
+
+        # 2. Инициализация официального клиента API
+        api_client = sib_api_v3_sdk.ApiClient(configuration)
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(api_client)
+
+        # 3. Сборка объекта письма
+        # Мы жестко используем наш верифицированный домен 'invite@questflow.online'
+        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+            sender={"name": "QuestFlow", "email": "invite@questflow.online"},
+            to=[{"email": to_email}],
+            subject=subject,
+            html_content=body_html
+        )
+
         try:
-            logger.debug(
-                "Brevo API: sending email to=%s from=%s subject=%r",
-                to_email, from_email, subject,
-            )
-            
-            response = requests.post(
-                self.BREVO_API_URL,
-                json=payload,
-                headers=headers,
-                timeout=self.REQUEST_TIMEOUT,
-            )
-            
-            # Log the response
-            logger.info(
-                "Brevo API response: status=%d to=%s from=%s subject=%r",
-                response.status_code, to_email, from_email, subject,
-            )
-            
-            response = requests.post(BREVO_API_URL, json=payload, headers=headers)
-
-            # Handle API errors
-            if response.status_code == 401:
-                logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY in .env")
-                raise BrevoEmailError(
-                    _("Email service authentication failed. Check BREVO_API_KEY setting.")
-                )
-            
-            if response.status_code == 429:
-                logger.warning("Brevo API: Rate limit exceeded (429). Retry after delay.")
-                raise BrevoEmailError(
-                    _("Email service is busy. Please try again in a moment.")
-                )
-            
-            if response.status_code >= 400:
-                error_detail = ""
-                try:
-                    error_json = response.json()
-                    error_detail = error_json.get("message", "Unknown error")
-                except Exception:
-                    error_detail = response.text[:150]
-                
-                logger.error(
-                    "Brevo API error (status=%d): %s | to=%s",
-                    response.status_code, error_detail, to_email,
-                )
-                raise BrevoEmailError(
-                    _("Email service error. Please try again or contact support.")
-                )
-            
-            # Success: 201 Created or 200 OK
-            logger.info(
-                "Email delivered via Brevo: status=%d to=%s from=%s",
-                response.status_code, to_email, from_email,
-            )
+            # Отправка через SDK
+            api_response = api_instance.send_transac_email(send_smtp_email)
+            logger.info("!!! BREVO SDK SUCCESS: %s", api_response)
             return True
+        except ApiException as e:
+            logger.error("!!! КРИТИЧЕСКАЯ ОШИБКА BREVO SDK: Status=%s | Body=%s", e.status, e.body)
+            raise BrevoEmailError(f"Email service error via SDK: {e.body}")
             
-        except requests.exceptions.Timeout:
-            logger.exception(
-                "Brevo API timeout: to=%s (timeout=%ds)",
-                to_email, self.REQUEST_TIMEOUT,
-            )
-            raise BrevoEmailError(
-                _("Email service request timed out. Please try again.")
-            )
-        
-        except requests.exceptions.ConnectionError as exc:
-            logger.exception("Brevo API connection failed: to=%s", to_email)
-            raise BrevoEmailError(
-                _("Could not connect to email service. Check your internet connection.")
-            ) from exc
-        
-        except requests.exceptions.RequestException as exc:
-            logger.exception("Brevo API request failed: to=%s", to_email)
-            raise BrevoEmailError(
-                _("Could not reach email service. Please try again.")
-            ) from exc
-        
-        except Exception as exc:
-            logger.exception("Unexpected error sending email to=%s", to_email)
-            raise BrevoEmailError(
-                _("Could not send email. Please try again.")
-            ) from exc
-
 
 class NotificationService:
     """

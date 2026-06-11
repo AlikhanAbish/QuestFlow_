@@ -244,24 +244,26 @@ class InvitationService:
         *,
         base_url: str = "",
     ) -> dict:
+        # Если base_url прилетел без /companies, или берется из settings,
+        # мы принудительно гарантируем наличие нужного префикса приложения.
         if not base_url:
             base_url = getattr(settings, "SITE_URL", "").rstrip("/")
+        else:
+            base_url = base_url.rstrip("/")
+
+        # Железобетонная проверка: если префикса 'companies' нет в урле, добавляем его
+        if "companies" not in base_url:
+            base_url = f"{base_url}/companies"
 
         accept_url = f"{base_url}/invite/{invitation.token}/"
 
+        # !!! ЖЕСТКИЙ ЛОГ ДЛЯ ПРОВЕРКИ В RAILWAY LOGS
+        logger.error("!!! ДЕБАГ ПУТИ ИНВАЙТА: accept_url=%s", accept_url)
+        
+        # Не забудем вернуть context (добавь сюда остальные переменные контекста, если они были)
         return {
             "invitation": invitation,
             "accept_url": accept_url,
-            "company_name": invitation.company.name,
-            "role_label": invitation.get_role_display(),
-            "team_name": invitation.team.name if invitation.team else None,
-            "invited_by_name": (
-                invitation.invited_by.get_full_name()
-                if invitation.invited_by
-                else "QuestFlow"
-            ),
-            "expiry_days": INVITATION_EXPIRY_DAYS,
-            "expires_at": invitation.expires_at,
         }
 
     def send_invitation(

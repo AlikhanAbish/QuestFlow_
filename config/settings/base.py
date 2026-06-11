@@ -124,14 +124,17 @@ AUTH_USER_MODEL = 'accounts.User'
 # ---------------------------------------------------------------------------
 # Email (Brevo API v3 — TZ 7.3)
 # ---------------------------------------------------------------------------
-SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
+SITE_URL = os.environ.get("SITE_URL", "https://questflow.online/companies")
+
+# Позволяет Django правильно определять хост и протокол (http/https) за прокси-сервером Railway
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Brevo API key for sending emails via HTTP (more reliable than SMTP on Railway)
-BREVO_API_KEY = os.getenv('BREVO_API_KEY', '')
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 
 # Verified sender in Brevo (Senders & IP) — the "From" email address
 # NOT the SMTP login *@smtp-brevo.com
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "invite@questflow.online")
 
 # Email backend — for development/testing only
 # BrevoEmailService detects console backend mode and uses it instead of Brevo API.

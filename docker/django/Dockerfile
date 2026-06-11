@@ -27,10 +27,13 @@ COPY . .
 RUN mkdir -p /app/static /app/staticfiles /app/media
 
 # Собираем статические файлы
+ENV DATABASE_URL=postgres://dummy:dummy@localhost:5432/dummy
 RUN python manage.py collectstatic --noinput 2>&1 || true
 
 # Открываем порт
 EXPOSE 8000
 
-# Запуск через entrypoint
-CMD ["sh", "/app/scripts/entrypoint.sh"]
+# Запускаем напрямую Gunicorn, подставляя порт от Railway
+CMD gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+# # Запуск через entrypoint
+# CMD ["sh", "/app/scripts/entrypoint.sh"]
