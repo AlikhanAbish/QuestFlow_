@@ -5,7 +5,7 @@
     "dockerfilePath": "docker/django/Dockerfile"
   },
   "deploy": {
-    "releaseCommand": "python manage.py migrate --noinput",
+    "releaseCommand": "python manage.py migrate --noinput && python manage.py telegram_setup_webhook",
     "restartPolicy": "ON_FAILURE"
   }
 }
