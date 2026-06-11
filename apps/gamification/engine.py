@@ -83,6 +83,10 @@ class GamificationEngine:
         """Award XP for action, apply streak multiplier, check level-up."""
         rule = self.rules.get(action)
         if not rule:
+            # Сюда принудительно ставим лог!
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"⚠️ [ДВИЖОК XP] Правило для действия '{action}' НЕ НАЙДЕНО в self.rules! Начисление прервано. Доступные правила: {list(self.rules.keys())}")
             return None, False
 
         base_xp = rule.xp_reward
