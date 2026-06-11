@@ -146,7 +146,7 @@ class BrevoEmailService:
         """
         payload = {
             # Явно передаем и имя, и email, как просит верификация Brevo
-            "sender": {"name": "QuestFlow", "email": "alikhanabishevwv@gmail.com"}, 
+            "sender": {"name": "QuestFlow", "email": "invite@questflow.online"}, 
             "to": [{"email": to_email}],
             "subject": subject,
             "htmlContent": body_html,
