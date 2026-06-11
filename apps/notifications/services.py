@@ -48,10 +48,19 @@ class BrevoEmailService:
     """
     Send emails via Brevo HTTP API instead of SMTP.
     
-    Brevo API is more reliable than SMTP on Railway (no socket.gaierror).
-    Falls back to console backend in development if EMAIL_BACKEND is configured.
+    **Why Brevo API instead of SMTP?**
+    - More reliable than SMTP on Railway (no socket.gaierror/DNS failures)
+    - HTTP API has better retry logic and status tracking
+    - No need to manage SMTP connections
+    - Proper rate limiting and error codes
     
-    Usage:
+    **Configuration:**
+    - Set BREVO_API_KEY in .env: https://app.brevo.com/settings/account/api
+    - Set DEFAULT_FROM_EMAIL to a verified sender (not SMTP login)
+      Example: "QuestFlow <noreply@your-domain.com>"
+    - In development, set EMAIL_BACKEND to console backend for testing
+    
+    **Usage:**
         service = BrevoEmailService()
         service.send_email(
             subject='Welcome',
@@ -61,18 +70,20 @@ class BrevoEmailService:
         )
     """
     
+    # Brevo SMTP Email API endpoint (HTTP, not SMTP)
     BREVO_API_URL = "https://api.brevo.com/v3/smtp/email/send"
     REQUEST_TIMEOUT = 10
     
     def __init__(self):
         self.api_key = getattr(settings, 'BREVO_API_KEY', None)
-        # Check if using console backend (development)
+        # Check if using console backend (development/testing only)
         email_backend = getattr(settings, 'EMAIL_BACKEND', '')
         self.use_console = 'console' in email_backend.lower()
         
         if not self.use_console and not self.api_key:
             raise BrevoEmailError(
-                _("BREVO_API_KEY is not configured. Set it in .env or Django settings.")
+                _("BREVO_API_KEY is not configured. Set it in .env or Django settings. "
+                  "Get it from: https://app.brevo.com/settings/account/api")
             )
     
     def send_email(
@@ -130,7 +141,12 @@ class BrevoEmailService:
         to_email: str,
         from_email: str,
     ) -> bool:
-        """Send email via Brevo HTTP API."""
+        """
+        Send email via Brevo HTTP API.
+        
+        Brevo API returns 201 on success, and various error codes for failures.
+        See: https://developers.brevo.com/docs/send-a-transactional-email
+        """
         payload = {
             "sender": {"email": from_email},
             "to": [{"email": to_email}],
@@ -144,6 +160,11 @@ class BrevoEmailService:
         }
         
         try:
+            logger.debug(
+                "Brevo API: sending email to=%s from=%s subject=%r",
+                to_email, from_email, subject,
+            )
+            
             response = requests.post(
                 self.BREVO_API_URL,
                 json=payload,
@@ -151,55 +172,71 @@ class BrevoEmailService:
                 timeout=self.REQUEST_TIMEOUT,
             )
             
-            # Log the request
+            # Log the response
             logger.info(
-                "Brevo API request: to=%s from=%s subject=%r status=%d",
-                to_email, from_email, subject, response.status_code,
+                "Brevo API response: status=%d to=%s from=%s subject=%r",
+                response.status_code, to_email, from_email, subject,
             )
             
-            # Handle errors
+            # Handle API errors
             if response.status_code == 401:
-                logger.error("Brevo API: invalid API key (401)")
+                logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY in .env")
                 raise BrevoEmailError(
-                    _("Email service authentication failed. Check BREVO_API_KEY.")
+                    _("Email service authentication failed. Check BREVO_API_KEY setting.")
                 )
             
             if response.status_code == 429:
-                logger.warning("Brevo API: rate limit exceeded (429)")
+                logger.warning("Brevo API: Rate limit exceeded (429). Retry after delay.")
                 raise BrevoEmailError(
-                    _("Email service is busy. Please try again later.")
+                    _("Email service is busy. Please try again in a moment.")
                 )
             
             if response.status_code >= 400:
-                error_msg = response.text[:200]  # Truncate for safety
+                error_detail = ""
+                try:
+                    error_json = response.json()
+                    error_detail = error_json.get("message", "Unknown error")
+                except Exception:
+                    error_detail = response.text[:150]
+                
                 logger.error(
-                    "Brevo API error %d: %s (to=%s)",
-                    response.status_code, error_msg, to_email,
+                    "Brevo API error (status=%d): %s | to=%s",
+                    response.status_code, error_detail, to_email,
                 )
                 raise BrevoEmailError(
-                    _("Email service error. Please try again.")
+                    _("Email service error. Please try again or contact support.")
                 )
             
+            # Success: 201 Created or 200 OK
             logger.info(
-                "Email sent via Brevo: to=%s from=%s subject=%r",
-                to_email, from_email, subject,
+                "Email delivered via Brevo: status=%d to=%s from=%s",
+                response.status_code, to_email, from_email,
             )
             return True
             
         except requests.exceptions.Timeout:
-            logger.exception("Brevo API timeout (to=%s)", to_email)
+            logger.exception(
+                "Brevo API timeout: to=%s (timeout=%ds)",
+                to_email, self.REQUEST_TIMEOUT,
+            )
             raise BrevoEmailError(
                 _("Email service request timed out. Please try again.")
             )
         
+        except requests.exceptions.ConnectionError as exc:
+            logger.exception("Brevo API connection failed: to=%s", to_email)
+            raise BrevoEmailError(
+                _("Could not connect to email service. Check your internet connection.")
+            ) from exc
+        
         except requests.exceptions.RequestException as exc:
-            logger.exception("Brevo API request failed (to=%s)", to_email)
+            logger.exception("Brevo API request failed: to=%s", to_email)
             raise BrevoEmailError(
                 _("Could not reach email service. Please try again.")
             ) from exc
         
         except Exception as exc:
-            logger.exception("Unexpected error sending email (to=%s)", to_email)
+            logger.exception("Unexpected error sending email to=%s", to_email)
             raise BrevoEmailError(
                 _("Could not send email. Please try again.")
             ) from exc

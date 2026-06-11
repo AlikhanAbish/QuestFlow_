@@ -133,12 +133,12 @@ BREVO_API_KEY = os.getenv('BREVO_API_KEY', '')
 # NOT the SMTP login *@smtp-brevo.com
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 
-# Email backend (optional, for development/testing)
-# Leave empty to use Brevo API, or set to 'django.core.mail.backends.console.EmailBackend' for console output
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.smtp.EmailBackend',  # Fallback (not used with Brevo API)
-)
+# Email backend — for development/testing only
+# BrevoEmailService detects console backend mode and uses it instead of Brevo API.
+# Set EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend' in .env or settings/development.py
+# for development (emails will be printed to console).
+# In production, leave empty — BrevoEmailService will use Brevo HTTP API.
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', '')
 
 # ---------------------------------------------------------------------------
 # Telegram Bot (TZ 6.2 / 7.3)
