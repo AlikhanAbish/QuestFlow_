@@ -6,7 +6,6 @@
   },
   "deploy": {
     "releaseCommand": "python manage.py migrate --noinput",
-    "startCommand": "python manage.py collectstatic --noinput --clear && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120",
     "restartPolicy": "ON_FAILURE"
   }
 }
