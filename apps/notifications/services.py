@@ -134,48 +134,34 @@ class BrevoEmailService:
         )
     
     
-    def _send_via_api(self, to_email, subject, html_content):
+    def _send_via_api(self, to_email, subject, body_html): # Изменили html_content на body_html
         import sib_api_v3_sdk
         from sib_api_v3_sdk.rest import ApiException
 
         # 1. Настройка конфигурации авторизации
         configuration = sib_api_v3_sdk.Configuration()
-        # Очищаем ключ от любых фантомных символов переноса строки
         configuration.api_key['api-key'] = str(self.api_key).strip().replace("\n", "").replace("\r", "")
 
         # 2. Инициализация официального клиента API
         api_client = sib_api_v3_sdk.ApiClient(configuration)
         api_instance = sib_api_v3_sdk.TransactionalEmailsApi(api_client)
 
-        # 3. Сборка объекта письма строго по спецификации SDK
+        # 3. Сборка объекта письма (передаем body_html в параметр html_content для Brevo)
         send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
             sender={"name": "QuestFlow", "email": "invite@questflow.online"},
             to=[{"email": to_email}],
             subject=subject,
-            html_content=html_content
+            html_content=body_html # Вот тут состыковали данные
         )
 
         try:
-            # Отправка через встроенный метод библиотеки
             api_response = api_instance.send_transac_email(send_smtp_email)
             logger.info("!!! BREVO SDK SUCCESS: %s", api_response)
             return True
         except ApiException as e:
-            # Если Brevo вернет ошибку, SDK выведет её структурированно
             logger.error("!!! КРИТИЧЕСКАЯ ОШИБКА BREVO SDK: Status=%s | Body=%s", e.status, e.body)
-            raise BrevoEmailError(f"Email service error via SDK: {e.body}")        
-        except BrevoEmailError:
-            # Пробрасываем наши кастомные ошибки выше без изменений
-            raise
-        except requests.exceptions.Timeout:
-            logger.exception("Brevo API timeout: to=%s", to_email)
-            raise BrevoEmailError(_("Email service request timed out."))
-        except requests.exceptions.RequestException as exc:
-            logger.exception("Brevo API request failed: to=%s", to_email)
-            raise BrevoEmailError(_("Could not reach email service.")) from exc
-        except Exception as exc:
-            logger.exception("Unexpected error sending email to=%s", to_email)
-            raise BrevoEmailError(_("Could not send email.")) from exc
+            raise BrevoEmailError(f"Email service error via SDK: {e.body}")
+            
 
 class NotificationService:
     """
