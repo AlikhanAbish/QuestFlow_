@@ -200,11 +200,11 @@ class BrevoEmailService:
                 
                 # ТЕПЕРЬ ТЫ ТОЧНО УВИДИШЬ ДЕТАЛИ В ЛОГАХ RAILWAY:
                 if response.status_code not in [200, 201, 202]:
-                logger.error(
-                    "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
-                    response.status_code,
-                    response.text  # Выведет реальный текст ошибки вместо пустых None
-                )
+                    logger.error(
+                        "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
+                        response.status_code,
+                        response.text  # Выведет реальный текст ошибки вместо пустых None
+                    )
                 raise BrevoEmailError(
                     _("Email service error. Please try again or contact support.")
                 )
