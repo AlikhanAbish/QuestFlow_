@@ -81,15 +81,29 @@ class GamificationEngine:
     @transaction.atomic
     def award_xp(self, action: str, task: "Optional[Task]" = None, note: str = "") -> tuple[Optional[XPTransaction], bool]:
         """Award XP for action, apply streak multiplier, check level-up."""
+        from apps.gamification.models import GamificationRule  # импорт внутри метода
+        
         rule = self.rules.get(action)
+        
+        # Если в словаре правила нет, ищем напрямую в реальной БД Railway
         if not rule:
-            # Сюда принудительно ставим лог!
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"⚠️ [ДВИЖОК XP] Правило для действия '{action}' НЕ НАЙДЕНО в self.rules! Начисление прервано. Доступные правила: {list(self.rules.keys())}")
+            rule, created = GamificationRule.objects.get_or_create(
+                action_type=action,
+                defaults={
+                    "xp_reward": 10,
+                    "name": f"Награда за {action}"
+                }
+            )
+            # Если создали новое, обновляем локальный словарь, чтобы не дергать БД в следующий раз
+            if hasattr(self, 'rules') and isinstance(self.rules, dict):
+                self.rules[action] = rule
+
+        # На всякий случай жесткий предохранитель
+        if not rule:
             return None, False
 
         base_xp = rule.xp_reward
+        # ... дальше твой оригинальный код без изменений ...
         multiplier = self._get_streak_multiplier()
         final_xp = int(base_xp * multiplier)
 
