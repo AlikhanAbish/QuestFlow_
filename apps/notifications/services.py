@@ -134,92 +134,92 @@ class BrevoEmailService:
         )
     
     def _send_via_api(
-    self,
-    *,
-    subject: str,
-    body_html: str,
-    to_email: str,
-    from_email: str,
-) -> bool:
-    """
-    Send email via Brevo HTTP API.
-    """
-    payload = {
-        "sender": {"email": from_email},
-        "to": [{"email": to_email}],
-        "subject": subject,
-        "htmlContent": body_html,
-    }
-    
-    headers = {
-        "api-key": self.api_key,
-        "Content-Type": "application/json",
-    }
-    
-    try:
-        logger.debug(
-            "Brevo API: sending email to=%s from=%s subject=%r",
-            to_email, from_email, subject,
-        )
+        self,
+        *,
+        subject: str,
+        body_html: str,
+        to_email: str,
+        from_email: str,
+    ) -> bool:
+        """
+        Send email via Brevo HTTP API.
+        """
+        payload = {
+            "sender": {"email": from_email},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "htmlContent": body_html,
+        }
         
-        # ДЕЛАЕМ ТОЛЬКО ОДИН ЗАПРОС И ИСПОЛЬЗУЕМ self.BREVO_API_URL
-        response = requests.post(
-            self.BREVO_API_URL,
-            json=payload,
-            headers=headers,
-            timeout=self.REQUEST_TIMEOUT,
-        )
+        headers = {
+            "api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
         
-        # Handle API errors
-        if response.status_code == 401:
-            logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY")
-            raise BrevoEmailError(
-                _("Email service authentication failed. Check BREVO_API_KEY setting.")
+        try:
+            logger.debug(
+                "Brevo API: sending email to=%s from=%s subject=%r",
+                to_email, from_email, subject,
             )
-        
-        if response.status_code == 429:
-            logger.warning("Brevo API: Rate limit exceeded (429). Retry after delay.")
-            raise BrevoEmailError(
-                _("Email service is busy. Please try again in a moment.")
-            )
-        
-        if response.status_code >= 400:
-            error_detail = ""
-            try:
-                error_json = response.json()
-                # Brevo возвращает подробности ошибки в формате {"code": "...", "message": "..."}
-                error_detail = f"Code: {error_json.get('code')}, Message: {error_json.get('message')}"
-            except Exception:
-                error_detail = response.text[:150]
             
-            # ТЕПЕРЬ ТЫ ТОЧНО УВИДИШЬ ДЕТАЛИ В ЛОГАХ RAILWAY:
-            logger.error(
-                "!!! BREVO RAW ERROR (status=%d): %s | to=%s | payload=%s",
-                response.status_code, error_detail, to_email, payload
+            # ДЕЛАЕМ ТОЛЬКО ОДИН ЗАПРОС И ИСПОЛЬЗУЕМ self.BREVO_API_URL
+            response = requests.post(
+                self.BREVO_API_URL,
+                json=payload,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
-            raise BrevoEmailError(
-                _("Email service error. Please try again or contact support.")
+            
+            # Handle API errors
+            if response.status_code == 401:
+                logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY")
+                raise BrevoEmailError(
+                    _("Email service authentication failed. Check BREVO_API_KEY setting.")
+                )
+            
+            if response.status_code == 429:
+                logger.warning("Brevo API: Rate limit exceeded (429). Retry after delay.")
+                raise BrevoEmailError(
+                    _("Email service is busy. Please try again in a moment.")
+                )
+            
+            if response.status_code >= 400:
+                error_detail = ""
+                try:
+                    error_json = response.json()
+                    # Brevo возвращает подробности ошибки в формате {"code": "...", "message": "..."}
+                    error_detail = f"Code: {error_json.get('code')}, Message: {error_json.get('message')}"
+                except Exception:
+                    error_detail = response.text[:150]
+                
+                # ТЕПЕРЬ ТЫ ТОЧНО УВИДИШЬ ДЕТАЛИ В ЛОГАХ RAILWAY:
+                logger.error(
+                    "!!! BREVO RAW ERROR (status=%d): %s | to=%s | payload=%s",
+                    response.status_code, error_detail, to_email, payload
+                )
+                raise BrevoEmailError(
+                    _("Email service error. Please try again or contact support.")
+                )
+            
+            # Success: 201 Created or 200 OK
+            logger.info(
+                "Email delivered via Brevo: status=%d to=%s from=%s",
+                response.status_code, to_email, from_email,
             )
-        
-        # Success: 201 Created or 200 OK
-        logger.info(
-            "Email delivered via Brevo: status=%d to=%s from=%s",
-            response.status_code, to_email, from_email,
-        )
-        return True
-        
-    except BrevoEmailError:
-        # Пробрасываем наши кастомные ошибки выше без изменений
-        raise
-    except requests.exceptions.Timeout:
-        logger.exception("Brevo API timeout: to=%s", to_email)
-        raise BrevoEmailError(_("Email service request timed out."))
-    except requests.exceptions.RequestException as exc:
-        logger.exception("Brevo API request failed: to=%s", to_email)
-        raise BrevoEmailError(_("Could not reach email service.")) from exc
-    except Exception as exc:
-        logger.exception("Unexpected error sending email to=%s", to_email)
-        raise BrevoEmailError(_("Could not send email.")) from exc
+            return True
+            
+        except BrevoEmailError:
+            # Пробрасываем наши кастомные ошибки выше без изменений
+            raise
+        except requests.exceptions.Timeout:
+            logger.exception("Brevo API timeout: to=%s", to_email)
+            raise BrevoEmailError(_("Email service request timed out."))
+        except requests.exceptions.RequestException as exc:
+            logger.exception("Brevo API request failed: to=%s", to_email)
+            raise BrevoEmailError(_("Could not reach email service.")) from exc
+        except Exception as exc:
+            logger.exception("Unexpected error sending email to=%s", to_email)
+            raise BrevoEmailError(_("Could not send email.")) from exc
 
 class NotificationService:
     """
