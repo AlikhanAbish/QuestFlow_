@@ -71,7 +71,7 @@ class BrevoEmailService:
     """
     
     # Brevo SMTP Email API endpoint (HTTP, not SMTP)
-    BREVO_API_URL = "https://api.brevo.com/v3/smtp/email/send"
+    BREVO_API_URL = "https://api.brevo.com/v3/smtp/emails"
     REQUEST_TIMEOUT = 10
     
     def __init__(self):
