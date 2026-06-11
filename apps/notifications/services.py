@@ -165,9 +165,11 @@ class BrevoEmailService:
 
             # ВРЕМЕННЫЙ ДЕБАГ ПЕРЕМЕННЫХ
             masked_key = f"{self.api_key[:6]}...{self.api_key[-4:]}" if self.api_key else "EMPTY/NONE"
+            if response.status_code not in [200, 201, 202]:
             logger.error(
-                "!!! ДЕБАГ ЗАПРОСА: URL=%r | API_KEY=%s | Headers=%s",
-                self.BREVO_API_URL, masked_key, headers
+                "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
+                response.status_code,
+                response.text  # Выведет реальный текст ошибки вместо пустых None
             )
             # ДЕЛАЕМ ТОЛЬКО ОДИН ЗАПРОС И ИСПОЛЬЗУЕМ self.BREVO_API_URL
             # Явно пишем строку URL, чтобы исключить любые старые константы
