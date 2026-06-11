@@ -94,12 +94,28 @@ class TaskService:
         cls._create_history(task, changed_by, 'status', old_status, new_status)
 
         # === Геймификация ===
+        # === Геймификация ===
         if new_status == TaskStatus.DONE:
+            logger.error(f"🎯 [ДЕБАГ XP] Задача {task.id} переведена в статус DONE. Входим в блок геймификации.")
+            
             # Начисляем XP тому, кому назначена задача
             assignee = task.assigned_to
+            logger.error(f"👤 [ДЕБАГ XP] Исполнитель задачи (assignee): {assignee} (ID: {assignee.id if assignee else 'None'})")
+            
             if assignee:
-                engine = GamificationEngine(assignee)
-                engine.award_xp('task_done', task=task)
+                try:
+                    logger.error(f"⚙️ [ДЕБАГ XP] Инициализируем GamificationEngine для {assignee.username}")
+                    engine = GamificationEngine(assignee)
+                    
+                    logger.error(f"🚀 [ДЕБАГ XP] Вызываем engine.award_xp('task_done'...)")
+                    engine.award_xp('task_done', task=task)
+                    logger.error(f"✅ [ДЕБАГ XP] Метод engine.award_xp отработал без исключений.")
+                    
+                except Exception as e:
+                    logger.exception(f"❌ [ДЕБАГ XP] КРИТИЧЕСКИЙ СБОЙ внутри GamificationEngine: {str(e)}")
+            else:
+                logger.error(f"⚠️ [ДЕБАГ XP] Начисление пропущено: у задачи {task.id} нет исполнителя (assigned_to = None).")
+
             cls._notify_telegram_task_completed(task, changed_by)
             cls._notify_in_app_task_completed(task, changed_by)
 

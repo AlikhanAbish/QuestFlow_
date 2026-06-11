@@ -4,12 +4,31 @@ from django.db.models.signals import post_migrate
 class GamificationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.gamification'
-    verbose_name = 'Gamification'
 
     def ready(self):
-        import apps.gamification.signals
-        # Initialize gamification rules after migrations
-        post_migrate.connect(initialize_gamification_rules, sender=self)
+        # Импортируем внутри метода, чтобы избежать AppRegistryNotReady
+        from apps.gamification.models import GamificationRule
+        import sys
+
+        # Защита: не запускаем создание правил во время сборки, генерации миграций или тестов
+        if 'makemigrations' in sys.argv or 'migrate' in sys.argv or 'test' in sys.argv:
+            return
+
+        try:
+            # Проверяем, существует ли уже правило для выполнения задачи
+            # get_or_create создаст его в РЕАЛЬНОЙ базе данных при старте сервера
+            rule, created = GamificationRule.objects.get_or_create(
+                action_type="task_done", # или как у тебя называется экшен (проверь в модели)
+                defaults={
+                    "xp_reward": 10, 
+                    "name": "Выполнение задачи"
+                }
+            )
+            if created:
+                print("!!! ГЕЙМИФИКАЦИЯ: Правило task_done успешно создано в БД.")
+        except Exception as e:
+            # Если таблицы еще не созданы (первый деплой), проект не упадет
+            print(f"!!! ГЕЙМИФИКАЦИЯ: Ошибка инициализации правил: {e}")
 
 
 def initialize_gamification_rules(sender, **kwargs):
