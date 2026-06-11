@@ -124,7 +124,7 @@ AUTH_USER_MODEL = 'accounts.User'
 # ---------------------------------------------------------------------------
 # Email (Brevo API v3 — TZ 7.3)
 # ---------------------------------------------------------------------------
-SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
+SITE_URL = os.getenv('SITE_URL', 'https://questflow.online')
 
 # Brevo API key for sending emails via HTTP (more reliable than SMTP on Railway)
 BREVO_API_KEY = os.getenv('BREVO_API_KEY')
