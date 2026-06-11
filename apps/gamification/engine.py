@@ -90,7 +90,7 @@ class GamificationEngine:
             rule, created = GamificationRule.objects.get_or_create(
                 action=action,  # ТУТ БЫЛО action_type, СТАЛО action
                 defaults={
-                    "xp_reward": 10,
+                    "xp_reward": 50,
                     # Если в модели нет поля name, убираем его, 
                     # судя по choices поля name там тоже нет, так что оставляем только xp_reward
                 }
