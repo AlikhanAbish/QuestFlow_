@@ -176,11 +176,11 @@ class BrevoEmailService:
             )
 
             if response.status_code not in [200, 201, 202]:
-            logger.error(
-                "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
-                response.status_code,
-                response.text  # Выведет реальный текст ошибки вместо пустых None
-            )
+                logger.error(
+                    "!!! КРИТИЧЕСКИЙ ОТВЕТ СЕРВЕРА (status=%s): %s",
+                    response.status_code,
+                    response.text  # Выведет реальный текст ошибки вместо пустых None
+                )
             # Handle API errors
             if response.status_code == 401:
                 logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY")
