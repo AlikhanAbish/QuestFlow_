@@ -81,24 +81,23 @@ class GamificationEngine:
     @transaction.atomic
     def award_xp(self, action: str, task: "Optional[Task]" = None, note: str = "") -> tuple[Optional[XPTransaction], bool]:
         """Award XP for action, apply streak multiplier, check level-up."""
-        from apps.gamification.models import GamificationRule  # импорт внутри метода
+        from apps.gamification.models import GamificationRule
         
         rule = self.rules.get(action)
         
-        # Если в словаре правила нет, ищем напрямую в реальной БД Railway
+        # Исправляем action_type на action
         if not rule:
             rule, created = GamificationRule.objects.get_or_create(
-                action_type=action,
+                action=action,  # ТУТ БЫЛО action_type, СТАЛО action
                 defaults={
                     "xp_reward": 10,
-                    "name": f"Награда за {action}"
+                    # Если в модели нет поля name, убираем его, 
+                    # судя по choices поля name там тоже нет, так что оставляем только xp_reward
                 }
             )
-            # Если создали новое, обновляем локальный словарь, чтобы не дергать БД в следующий раз
             if hasattr(self, 'rules') and isinstance(self.rules, dict):
                 self.rules[action] = rule
 
-        # На всякий случай жесткий предохранитель
         if not rule:
             return None, False
 
