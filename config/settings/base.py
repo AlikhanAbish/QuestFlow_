@@ -126,6 +126,9 @@ AUTH_USER_MODEL = 'accounts.User'
 # ---------------------------------------------------------------------------
 SITE_URL = os.getenv('SITE_URL', 'https://questflow.online')
 
+# Позволяет Django правильно определять хост и протокол (http/https) за прокси-сервером Railway
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Brevo API key for sending emails via HTTP (more reliable than SMTP on Railway)
 BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 
