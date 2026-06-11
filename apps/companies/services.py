@@ -256,6 +256,9 @@ class InvitationService:
             base_url = f"{base_url}/companies"
 
         accept_url = f"{base_url}/invite/{invitation.token}/"
+
+        # !!! ЖЕСТКИЙ ЛОГ ДЛЯ ПРОВЕРКИ В RAILWAY LOGS
+        logger.error("!!! ДЕБАГ ПУТИ ИНВАЙТА: accept_url=%s", accept_url)
         
         # Не забудем вернуть context (добавь сюда остальные переменные контекста, если они были)
         return {
