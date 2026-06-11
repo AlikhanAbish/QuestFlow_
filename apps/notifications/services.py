@@ -164,8 +164,9 @@ class BrevoEmailService:
             )
             
             # ДЕЛАЕМ ТОЛЬКО ОДИН ЗАПРОС И ИСПОЛЬЗУЕМ self.BREVO_API_URL
+            # Явно пишем строку URL, чтобы исключить любые старые константы
             response = requests.post(
-                self.BREVO_API_URL,
+                "https://api.brevo.com/v3/smtp/emails",
                 json=payload,
                 headers=headers,
                 timeout=self.REQUEST_TIMEOUT,
