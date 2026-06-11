@@ -5,12 +5,7 @@
     "dockerfilePath": "docker/django/Dockerfile"
   },
   "deploy": {
-      "startCommand": "sh -c '
-  echo "nameserver 8.8.8.8" > /etc/resolv.conf &&
-  sleep 5 &&
-  python manage.py migrate --noinput && 
-  python manage.py collectstatic --noinput --clear && 
-  gunicorn config.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120",
+      "startCommand": "sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf && sleep 5 && python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120",
     "restartPolicy": "ON_FAILURE"
   }
 }
