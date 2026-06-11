@@ -177,7 +177,14 @@ class BrevoEmailService:
                 "Brevo API response: status=%d to=%s from=%s subject=%r",
                 response.status_code, to_email, from_email, subject,
             )
-            
+
+
+            if response.status_code != 201: # или 200 в зависимости от логики
+                # ДОБАВЬ ЭТУ СТРОКУ, ЧТОБЫ УВИДЕТЬ ТЕКСТ ОШИБКИ В ЛОГАХ RAILWAY:
+                print(f"!!! БРЕВО ОТВЕТИЛ: {response.status_code} | {response.text}")
+                
+                raise BrevoEmailError(...)
+                
             # Handle API errors
             if response.status_code == 401:
                 logger.error("Brevo API: Invalid API key (401). Check BREVO_API_KEY in .env")
