@@ -70,21 +70,36 @@ class TelegramConnectView(LoginRequiredMixin, View):
     def _render_widget(self, request, rotate: bool = False):
         from django.template.response import TemplateResponse
         from django.conf import settings
+        from apps.telegram_bot.models import TelegramUser
+        import traceback
 
-        # 🔥 Железобетонно создаем/получаем TelegramUser, чтобы не падало
-        tg_user, created = TelegramUser.objects.get_or_create(user=request.user)
-        
-        # Генерируем UUID токен
-        token = TelegramService.generate_connect_token(request.user)
-        bot_username = getattr(settings, "TELEGRAM_BOT_USERNAME", "QuestFlowBot")
+        # Проверка на случай, если аноним пробрался к урлу
+        if not request.user.is_authenticated:
+            print("❌ [TELEGRAM WIDGET] Ошибка: Пользователь не авторизован!")
+            return JsonResponse({"error": "Unauthorized"}, status=401)
 
-        context = {
-            "connect_token": token,
-            "bot_username": bot_username,
-            "deep_link": f"https://t.me/{bot_username}?start={token}", # Ссылка строго с UUID
-            "connect_param": token,
-            "already_linked": self._is_linked(request.user),
-        }
+        try:
+            # Безопасно берем или создаем запись в БД
+            tg_user, created = TelegramUser.objects.get_or_create(user=request.user)
+            
+            # Генерируем токен
+            token = TelegramService.generate_connect_token(request.user)
+            bot_username = getattr(settings, "TELEGRAM_BOT_USERNAME", "QuestFlowBot")
+            
+            print(f"🍏 [TELEGRAM WIDGET] Успешно сгенерирован токен {token} для юзера {request.user.username}")
+
+            context = {
+                "connect_token": token,
+                "bot_username": bot_username,
+                "deep_link": f"https://t.me/{bot_username}?start={token}",
+                "connect_param": token,
+                "already_linked": self._is_linked(request.user),
+            }
+            
+        except Exception as e:
+            print(f"❌❌❌ [TELEGRAM WIDGET] КРИТИЧЕСКИЙ СБОЙ ВНУТРИ ВИДЖЕТА: {e}")
+            print(traceback.format_exc())
+            return HttpResponse("<p style='color:red;'>Ошибка загрузки виджета Телеграм</p>", status=200)
 
         template = "telegram_bot/partials/_connect_widget.html"
         return TemplateResponse(request, template, context)
