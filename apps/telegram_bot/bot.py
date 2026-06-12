@@ -29,25 +29,36 @@ def _get_start_lock() -> asyncio.Lock:
 
 
 def get_application():
+    """
+    Инициализирует и возвращает синглтон асинхронного Application.
+    Регистрирует все хэндлеры команд.
+    """
     global _application
     if _application is None:
         token = getattr(settings, "TELEGRAM_BOT_TOKEN", None)
-        if not token:
+        if not token or token == "your-telegram-bot-token":
+            logger.error("🤖 [BOT CONFIG] TELEGRAM_BOT_TOKEN не установлен или является заглушкой!")
             return None
         
-        # Строим приложение бота и регистрируем хэндлеры (start, profile...)
-        builder = Application.builder().token(token)
-        _application = builder.build()
-        
-        # 🔥 ВАЖНО: Импортируй и добавь свои хэндлеры здесь, если их нет
-        from .handlers import start, profile, tasks, badges
-        from telegram.ext import CommandHandler
-        
-        _application.add_handler(CommandHandler("start", start))
-        _application.add_handler(CommandHandler("profile", profile))
-        _application.add_handler(CommandHandler("tasks", tasks))
-        _application.add_handler(CommandHandler("badges", badges))
-        
+        try:
+            # Строим базовое приложение telegram бота
+            builder = Application.builder().token(token)
+            _application = builder.build()
+            
+            # 🔥 Импортируем твои готовые обработчики команд из соседнего файла
+            from .handlers import start, profile, tasks, badges
+            
+            # Регистрируем команды, чтобы бот знал, на что реагировать
+            _application.add_handler(CommandHandler("start", start))
+            _application.add_handler(CommandHandler("profile", profile))
+            _application.add_handler(CommandHandler("tasks", tasks))
+            _application.add_handler(CommandHandler("badges", badges))
+            
+            logger.info("🤖 [BOT CONFIG] Асинхронное Application и хэндлеры успешно инициализированы.")
+        except Exception as e:
+            logger.error(f"🤖 [BOT CONFIG] Критическая ошибка сборки Application: {e}", exc_info=True)
+            return None
+            
     return _application
 
 
@@ -73,19 +84,31 @@ async def ensure_application_started() -> bool:
     return True
 
 
-async def process_webhook_update(update):
+async def process_webhook_update(update: Update):
+    """
+    Принимает Update от вьюхи, проверяет жизненный цикл бота 
+    и принудительно проталкивает обновление в хэндлеры.
+    """
     application = get_application()
     if not application:
+        print("❌ [BOT PROCESS] Невозможно обработать вебхук: Application равен None.")
         return
 
-    # 🔥 КРИТИЧЕСКИ ВАЖНО ДЛЯ ВЕБХУКОВ:
-    # Если под капотом ptb v20+, приложение должно быть инициализировано!
-    if not application.updater_running and not application.running:
-        await application.initialize()
-        await application.start()
+    try:
+        # 🔥 КРИТИЧЕСКИЙ ФИКС ДЛЯ ВЕБХУКОВ НА PRODUCTION:
+        # В режиме вебхуков под Gunicorn библиотека ptb v20+ требует ручного старта
+        if not application.running:
+            await application.initialize()
+            await application.start()
+            print("🍏 [BOT PROCESS] Контекст бота принудительно инициализирован (running=True).")
 
-    # Передаем обновление в хэндлеры
-    await application.process_update(update)
+        # Передаем распарсенное сообщение напрямую в хэндлеры (start, help и т.д.)
+        await application.process_update(update)
+        print(f"🍏 [BOT PROCESS] Update ID {update.update_id} успешно передан в обработчики.")
+        
+    except Exception as e:
+        print(f"❌ [BOT PROCESS] Ошибка внутри process_webhook_update: {e}")
+        logger.error("Ошибка обработки апдейта телеграм бота", exc_info=True)
 
 
 def get_bot():
