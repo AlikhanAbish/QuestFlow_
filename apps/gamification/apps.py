@@ -18,7 +18,7 @@ class GamificationConfig(AppConfig):
             # Проверяем, существует ли уже правило для выполнения задачи
             # get_or_create создаст его в РЕАЛЬНОЙ базе данных при старте сервера
             rule, created = GamificationRule.objects.get_or_create(
-                action_type="task_done", # или как у тебя называется экшен (проверь в модели)
+                action="task_done", # или как у тебя называется экшен (проверь в модели)
                 defaults={
                     "xp_reward": 10, 
                     "name": "Выполнение задачи"

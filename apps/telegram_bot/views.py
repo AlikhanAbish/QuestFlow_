@@ -20,6 +20,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from .bot import get_application, process_webhook_update
 
 logger = logging.getLogger(__name__)
