@@ -11,39 +11,28 @@ TelegramConnectView   POST /profile/telegram/connect/
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
+from asgiref.sync import async_to_sync  # 🔥 Добавили мост между sync и async
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from .bot import get_application, process_webhook_update
-from .services import TelegramService
 
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Webhook
-# ---------------------------------------------------------------------------
 
 @method_decorator(csrf_exempt, name="dispatch")
 class TelegramWebhookView(View):
     """
-    TZ 4.9: POST /telegram/webhook/
-
-    Receives raw JSON from Telegram and processes it through python-telegram-bot.
-    Uses a sync post() + asyncio.run() so gunicorn WSGI workers handle updates reliably.
+    POST /telegram/webhook/
+    Преобразует синхронный запрос Django в безопасную асинхронную среду
+    без создания конфликтующих event loop'ов.
     """
 
     def post(self, request, *args, **kwargs):
-        return asyncio.run(self._handle_post(request))
-
-    async def _handle_post(self, request, *args, **kwargs):
         from telegram import Update
 
         application = get_application()
@@ -52,13 +41,17 @@ class TelegramWebhookView(View):
             return JsonResponse({"ok": False, "error": "Bot not configured"}, status=503)
 
         try:
+            # Читаем и парсим тело запроса
             data = json.loads(request.body)
             update = Update.de_json(data, application.bot)
+            
             if update is None:
                 logger.warning("TelegramWebhookView: failed to parse update.")
                 return JsonResponse({"ok": False, "error": "Invalid update"}, status=400)
 
-            await process_webhook_update(update)
+            # 🔥 Безопасно вызываем асинхронную обработку внутри веб-потока Gunicorn
+            async_to_sync(process_webhook_update)(update)
+
         except Exception as exc:
             logger.error("TelegramWebhookView error: %s", exc, exc_info=True)
             return JsonResponse({"ok": False}, status=500)
@@ -66,7 +59,7 @@ class TelegramWebhookView(View):
         return JsonResponse({"ok": True})
 
     def get(self, request, *args, **kwargs):
-        """Health-check endpoint."""
+        """Health-check endpoint (оставляем без изменений)"""
         from django.conf import settings
         from .bot import _is_local_webhook_url
 
@@ -79,11 +72,7 @@ class TelegramWebhookView(View):
             "status": "ok",
             "bot_configured": token_set,
             "webhook_reachable_by_telegram": webhook_public,
-            "hint": (
-                None
-                if webhook_public
-                else "TELEGRAM_WEBHOOK_URL must be public HTTPS, or use: python manage.py telegram_run_polling"
-            ),
+            "hint": None if webhook_public else "TELEGRAM_WEBHOOK_URL error",
         })
 
 
@@ -115,10 +104,11 @@ class TelegramConnectView(LoginRequiredMixin, View):
         context = {
             "connect_token": token,
             "bot_username": bot_username,
-            "deep_link": f"https://t.me/{bot_username}?start=connect_{request.user.id}",
-            "connect_param": f"connect_{request.user.id}",
+            "deep_link": f"https://t.me/{bot_username}?start={token}",  # Передаем сам UUID токен
+            "connect_param": token,
             "already_linked": self._is_linked(request.user),
         }
+        
 
         template = "telegram_bot/partials/_connect_widget.html"
         return TemplateResponse(request, template, context)
