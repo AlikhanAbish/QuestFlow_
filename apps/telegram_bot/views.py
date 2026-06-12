@@ -99,18 +99,22 @@ class TelegramConnectView(LoginRequiredMixin, View):
     def _render_widget(self, request, rotate: bool = False):
         from django.template.response import TemplateResponse
         from django.conf import settings
+        from apps.telegram_bot.models import TelegramUser  # Импортируем модель
 
+        # 🔥 БЕЗОПАСНО: Проверяем существование или создаем пустую запись TelegramUser для юзера
+        tg_user, created = TelegramUser.objects.get_or_create(user=request.user)
+
+        # Генерируем токен (убедись, что метод принимает tg_user или генерирует внутри)
         token = TelegramService.generate_connect_token(request.user)
         bot_username = getattr(settings, "TELEGRAM_BOT_USERNAME", "QuestFlowBot")
 
         context = {
             "connect_token": token,
             "bot_username": bot_username,
-            "deep_link": f"https://t.me/{bot_username}?start={token}",  # Передаем сам UUID токен
+            "deep_link": f"https://t.me/{bot_username}?start={token}",
             "connect_param": token,
             "already_linked": self._is_linked(request.user),
         }
-        
 
         template = "telegram_bot/partials/_connect_widget.html"
         return TemplateResponse(request, template, context)

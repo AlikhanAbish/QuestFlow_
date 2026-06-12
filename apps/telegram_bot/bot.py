@@ -29,30 +29,25 @@ def _get_start_lock() -> asyncio.Lock:
 
 
 def get_application():
-    """
-    Returns (and lazily creates) the shared python-telegram-bot Application.
-    Uses updater=None for custom Django webhook (see PTB customwebhookbot example).
-    """
     global _application
-
-    token = getattr(settings, "TELEGRAM_BOT_TOKEN", None)
-    if not token or token == "your-telegram-bot-token":
-        logger.debug("get_application: TELEGRAM_BOT_TOKEN not set — bot disabled.")
-        return None
-
     if _application is None:
-        from telegram.ext import Application
-        from .handlers import register_handlers
-
-        _application = (
-            Application.builder()
-            .token(token)
-            .updater(None)
-            .build()
-        )
-        register_handlers(_application)
-        logger.info("Telegram Application created and handlers registered.")
-
+        token = getattr(settings, "TELEGRAM_BOT_TOKEN", None)
+        if not token:
+            return None
+        
+        # Строим приложение бота и регистрируем хэндлеры (start, profile...)
+        builder = Application.builder().token(token)
+        _application = builder.build()
+        
+        # 🔥 ВАЖНО: Импортируй и добавь свои хэндлеры здесь, если их нет
+        from .handlers import start, profile, tasks, badges
+        from telegram.ext import CommandHandler
+        
+        _application.add_handler(CommandHandler("start", start))
+        _application.add_handler(CommandHandler("profile", profile))
+        _application.add_handler(CommandHandler("tasks", tasks))
+        _application.add_handler(CommandHandler("badges", badges))
+        
     return _application
 
 
@@ -78,11 +73,18 @@ async def ensure_application_started() -> bool:
     return True
 
 
-async def process_webhook_update(update) -> None:
-    """Process one Telegram update through registered handlers."""
-    if not await ensure_application_started():
-        raise RuntimeError("Telegram bot is not configured")
+async def process_webhook_update(update):
     application = get_application()
+    if not application:
+        return
+
+    # 🔥 КРИТИЧЕСКИ ВАЖНО ДЛЯ ВЕБХУКОВ:
+    # Если под капотом ptb v20+, приложение должно быть инициализировано!
+    if not application.updater_running and not application.running:
+        await application.initialize()
+        await application.start()
+
+    # Передаем обновление в хэндлеры
     await application.process_update(update)
 
 
