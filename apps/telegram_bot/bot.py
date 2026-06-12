@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler  
 
 from django.conf import settings
 
